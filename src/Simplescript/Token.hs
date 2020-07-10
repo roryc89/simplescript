@@ -3,6 +3,7 @@
 {-# LANGUAGE BlockArguments  #-}
 {-# LANGUAGE LambdaCase  #-}
 {-# LANGUAGE TypeFamilies  #-}
+{-# LANGUAGE DeriveFunctor  #-}
 
 
 module Simplescript.Token where 
@@ -17,7 +18,13 @@ import qualified Data.List          as DL
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set           as Set
 
-data Line = Line [WithPos SToken] [Line] deriving (Show)
+type TokenAndPosLine = Line (WithPos SToken)
+
+data Line a = Line Text [a] [Line a]
+    deriving (Eq, Ord, Show, Functor)
+
+removePositions :: TokenAndPosLine -> Line SToken
+removePositions = fmap tokenVal
 
 data SToken 
     = Identifier Text
@@ -27,6 +34,7 @@ data SToken
     | SChar Char
     | SString Text
     | Assign
+    | Backslash
     | Colon
     | Comma
     | LParen 
@@ -46,6 +54,7 @@ showSToken = \case
     Int n -> T.pack $ show n
     Number n -> T.pack $ show n
     Assign -> "="
+    Backslash -> "\\"
     Colon -> ":"
     Comma -> ","
     LParen -> "("
@@ -61,6 +70,7 @@ data WithPos a = WithPos
   , tokenLength :: Int
   , tokenVal :: a
   } deriving (Eq, Ord, Show)
+
 
 data TokStream = TokStream
   { tokStreamInput :: Text -- for showing offending lines
@@ -134,7 +144,6 @@ instance Stream TokStream where
           Nothing -> 0
           Just nePre -> tokensLength pxy nePre
       restOfLine = T.takeWhile (/= '\n') postStr
-
 
 pxy :: Proxy TokStream
 pxy = Proxy

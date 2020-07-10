@@ -43,7 +43,7 @@ executables:
 
 tests:
   ss2-test:
-    main:                Spec.hs
+    main:                test.hs
     source-dirs:         test
     ghc-options:
     - -threaded
@@ -51,7 +51,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - ss2
-    - simplescript
     - tasty
     - tasty-hunit
     - neat-interpolation

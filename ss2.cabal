@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4e66c3fe6ffa70eca0221f6c0cab8ac3932f7c699e8a6989ef22e4bf6b7a5cc6
+-- hash: 5938607a26533f60760d77d32593d92fdffb3e1d9afdaa6b14bb0c38520bfee8
 
 name:           ss2
 version:        0.1.0.0
@@ -62,8 +62,9 @@ executable ss2-exe
 
 test-suite ss2-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: test.hs
   other-modules:
+      Test.Simplescript.Lex
       Paths_ss2
   hs-source-dirs:
       test
@@ -74,7 +75,6 @@ test-suite ss2-test
     , megaparsec
     , neat-interpolation
     , parser-combinators
-    , simplescript
     , ss2
     , tasty
     , tasty-hunit
