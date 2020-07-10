@@ -33,9 +33,9 @@ pLine :: Parser TokenAndPosLine
 pLine = Lexer.indentBlock spacesNewlines p
   where
     p = do
-        -- t <-  takeLine
+        t <- Parsec.lookAhead $ Parsec.takeWhileP Nothing (/= '\n')
         tokens <- pSTokens
-        return $ Lexer.IndentMany Nothing (return . Line "" tokens) pLine
+        return $ Lexer.IndentMany Nothing (return . Line t tokens) pLine
 
 -- lexeme 
 

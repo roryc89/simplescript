@@ -14,15 +14,15 @@ tests :: TestTree
 tests = testGroup "Lexer"
     [ testGroup "singles"
         [ testCase "integer" $
-            runLexerWoPos "22" @?= Right [Line "" [Int 22] []]
+            runLexerWoPos "22" @?= Right [Line "22" [Int 22] []]
         , testCase "number" $
-            runLexerWoPos "55.2" @?= Right [Line "" [Number 55.2] []]
+            runLexerWoPos "55.2" @?= Right [Line "55.2" [Number 55.2] []]
         , testCase "string" $
-            runLexerWoPos "\"hello\"" @?= Right [Line "" [SString "hello"] []]
+            runLexerWoPos "\"hello\"" @?= Right [Line "\"hello\"" [SString "hello"] []]
         , testCase "operator" $
-            runLexerWoPos "<>" @?= Right [Line "" [Operator "<>"] []]
+            runLexerWoPos "<>" @?= Right [Line "<>" [Operator "<>"] []]
         , testCase "identifier" $
-            runLexerWoPos "myIdent" @?= Right [Line "" [Identifier "myIdent"] []]
+            runLexerWoPos "myIdent" @?= Right [Line "myIdent" [Identifier "myIdent"] []]
         ]
 --     , testGroup "simple multiple without whitespace"
 --         [ testCase "brackets" $
