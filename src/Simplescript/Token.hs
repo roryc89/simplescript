@@ -35,10 +35,10 @@ linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)
 
 showTokenAndPosLines :: [TokenAndPosLine] -> Text 
-showTokenAndPosLines =  drop 1 . showTokenAndPosLine . Line []
+showTokenAndPosLines =  T.strip . T.intercalate "\n" . showTokenAndPosLine . Line []
 
-showTokenAndPosLine :: TokenAndPosLine -> _
-showTokenAndPosLine = fmap showSTokensWithIdent . insertBlankLines . D.traceShowId . linesToList 
+showTokenAndPosLine :: TokenAndPosLine -> [Text]
+showTokenAndPosLine = fmap showSTokensWithIdent . insertBlankLines . linesToList 
 
 insertBlankLines :: [[WithPos SToken]] -> [[WithPos SToken]]
 insertBlankLines (row1:row2:tail) = row1 : (replicate blanks [] <> insertBlankLines (row2:tail))
@@ -48,7 +48,7 @@ insertBlankLines (row1:row2:tail) = row1 : (replicate blanks [] <> insertBlankLi
             _ -> 0
           
         row1IdxMay = getRow <$>  headMay row1
-        nextRowIdxMay = D.traceShowId . getRow <$> (headMay =<< DL.find ((/=) []) (row2:tail))
+        nextRowIdxMay = getRow <$> (headMay =<< DL.find ((/=) []) (row2:tail))
 
         getRow = unPos . sourceLine . startPos
 
