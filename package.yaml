@@ -26,6 +26,7 @@ dependencies:
 - neat-interpolation
 - parser-combinators
 - containers
+- safe
 
 library:
   source-dirs: src

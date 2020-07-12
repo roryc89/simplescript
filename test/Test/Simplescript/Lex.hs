@@ -5,6 +5,8 @@ module Test.Simplescript.Lex where
 
 import Test.Tasty
 import Test.Tasty.HUnit
+import Data.Text (Text)
+import Data.Text as T
 import Simplescript.Lex (sLex)
 import Text.Megaparsec.Pos
 import Simplescript.Token
@@ -14,15 +16,15 @@ tests :: TestTree
 tests = testGroup "Lexer"
     [ testGroup "singles"
         [ testCase "integer" $
-            runLexerWoPos "22" @?= Right [Line "22" [Int 22] []]
+            runLexerWoPos "22" @?= Right [Line [Int 22] []]
         , testCase "number" $
-            runLexerWoPos "55.2" @?= Right [Line "55.2" [Number 55.2] []]
+            runLexerWoPos "55.2" @?= Right [Line [Number 55.2] []]
         , testCase "string" $
-            runLexerWoPos "\"hello\"" @?= Right [Line "\"hello\"" [SString "hello"] []]
+            runLexerWoPos "\"hello\"" @?= Right [Line [SString "hello"] []]
         , testCase "operator" $
-            runLexerWoPos "<>" @?= Right [Line "<>" [Operator "<>"] []]
+            runLexerWoPos "<>" @?= Right [Line [Operator "<>"] []]
         , testCase "identifier" $
-            runLexerWoPos "myIdent" @?= Right [Line "myIdent" [Identifier "myIdent"] []]
+            runLexerWoPos "myIdent" @?= Right [Line [Identifier "myIdent"] []]
         ]
 --     , testGroup "simple multiple without whitespace"
 --         [ testCase "brackets" $
@@ -55,14 +57,6 @@ tests = testGroup "Lexer"
 --                     , RBrace 
 --                     , RSquareBracket 
 --                     , RParen 
---                     ]
---         , testCase "assignment" $
---             runLexerWoPos "a = 1 :" 
---                 @?= Right 
---                     [ Identifier "a"
---                     , Assign  
---                     , Int 1
---                     , Colon
 --                     ]
 --         ]
 --     , testCase "longer multiline lexing" $
@@ -130,11 +124,28 @@ tests = testGroup "Lexer"
 --                 , withPos 3 21 1 RParen 
 --                 ]
 --         ]
+    , testGroup "Round trip tests" 
+      [ 
+    --       roundTripTest "([{}])" 
+    --   , roundTripTest "([ {} ] )"
+    --   , roundTripTest "a=1"
+    --   , roundTripTest "a\nb"
+    --   , 
+      roundTripTest "a\n\nb"
+--       , roundTripTest [text|
+-- mul x y = x * y + 2
+
+-- append a b = (a ++ b)|]
+      ]
     ]
 
     where 
-        -- -- runLexerWoPos :: Text -> Either (Parsec.ParseErrorBundle Text Void) [SToken]
+        roundTripTest :: Text -> TestTree
+        roundTripTest input = 
+            testCase (T.unpack input) $ fmap showTokenAndPosLines (sLex input) @?= Right input
+
         runLexerWoPos = fmap (fmap removePositions) . sLex
+
         withPos line startCol len = 
              WithPos (at line startCol) (at line (startCol + len)) len
         at line col = SourcePos "" (mkPos line) (mkPos col)

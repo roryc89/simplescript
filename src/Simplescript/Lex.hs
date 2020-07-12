@@ -33,9 +33,9 @@ pLine :: Parser TokenAndPosLine
 pLine = Lexer.indentBlock spacesNewlines p
   where
     p = do
-        t <- Parsec.lookAhead $ Parsec.takeWhileP Nothing (/= '\n')
+        -- t <- Parsec.lookAhead $ Parsec.takeWhileP Nothing (/= '\n')
         tokens <- pSTokens
-        return $ Lexer.IndentMany Nothing (return . Line t tokens) pLine
+        return $ Lexer.IndentMany Nothing (return . Line tokens) pLine
 
 -- lexeme 
 
@@ -53,11 +53,8 @@ takeLine = Parsec.takeWhile1P Nothing pred
   where
     pred c = c == ' ' || c == '\t'
 
-scl :: Parser ()
-scl = Lexer.space (void $ some (CharParser.char ' ' <|> CharParser.char '\t' <|> CharParser.char '\n')) lineComment empty
-
 lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme scl
+lexeme = Lexer.lexeme spaces
 
 -- tokens
 
@@ -65,7 +62,7 @@ pSTokens :: Parser [WithPos SToken]
 pSTokens = Parsec.manyTill pSToken (Parsec.eof <|> void CharParser.eol)
 
 pSToken :: Parser (WithPos SToken) 
-pSToken = withPos $ lexeme $ choice 
+pSToken = lexeme $ withPos $ choice 
     [ Assign <$ char '='
     , Backslash <$ char '\\'
     , Colon <$ char ':'

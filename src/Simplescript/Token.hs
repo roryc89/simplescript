@@ -17,14 +17,45 @@ import Text.Megaparsec
 import qualified Data.List          as DL
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set           as Set
+import qualified Debug.Trace as D
+import Safe
 
-type TokenAndPosLine = Line (WithPos SToken)
+type TokenAndPosLine = Line [WithPos SToken]
 
-data Line a = Line Text [a] [Line a]
+data Line a = Line
+    { line :: a
+    , indented :: [Line a]
+    }
     deriving (Eq, Ord, Show, Functor)
 
-removePositions :: TokenAndPosLine -> Line SToken
-removePositions = fmap tokenVal
+flattenLines :: Monoid a => Line a -> a
+flattenLines Line{..} = line <> foldMap flattenLines indented
+
+linesToList :: Line [a] -> [[a]]
+linesToList Line{..} = [line] <> (linesToList =<< indented)
+
+showTokenAndPosLines :: [TokenAndPosLine] -> Text 
+showTokenAndPosLines =  drop 1 . showTokenAndPosLine . Line []
+
+showTokenAndPosLine :: TokenAndPosLine -> _
+showTokenAndPosLine = fmap showSTokensWithIdent . insertBlankLines . D.traceShowId . linesToList 
+
+insertBlankLines :: [[WithPos SToken]] -> [[WithPos SToken]]
+insertBlankLines (row1:row2:tail) = row1 : (replicate blanks [] <> insertBlankLines (row2:tail))
+    where 
+        blanks = case (row1IdxMay, nextRowIdxMay) of 
+            (Just row1Idx, Just nextRowIdx) -> nextRowIdx - row1Idx - 1
+            _ -> 0
+          
+        row1IdxMay = getRow <$>  headMay row1
+        nextRowIdxMay = D.traceShowId . getRow <$> (headMay =<< DL.find ((/=) []) (row2:tail))
+
+        getRow = unPos . sourceLine . startPos
+
+insertBlankLines toks = toks 
+
+removePositions :: TokenAndPosLine -> Line [SToken]
+removePositions = fmap (fmap tokenVal)
 
 data SToken 
     = Identifier Text
@@ -43,7 +74,18 @@ data SToken
     | RBrace
     | LSquareBracket
     | RSquareBracket
+    | Eol -- Not used in parsing but for joining lines
     deriving (Eq, Ord, Show)
+
+showSTokensWithIdent :: [WithPos SToken] -> Text
+showSTokensWithIdent = go ""
+  where 
+    go :: Text -> [WithPos SToken] -> Text
+    go result ts@(h:t) = 
+        go (T.justifyLeft col ' ' result <> showSToken (tokenVal h)) t
+        where 
+            col = unPos (sourceColumn $ startPos h) - 1
+    go result ts = result
 
 showSToken :: SToken -> Text
 showSToken = \case
@@ -63,6 +105,7 @@ showSToken = \case
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
+    Eol -> "\n"
 
 data WithPos a = WithPos
   { startPos :: SourcePos
@@ -72,11 +115,14 @@ data WithPos a = WithPos
   } deriving (Eq, Ord, Show)
 
 
-data TokStream = TokStream
-  { tokStreamInput :: Text -- for showing offending lines
-  , unTokStream :: [WithPos SToken]
-  }
+newtype TokStream = TokStream [WithPos SToken]
   deriving (Eq, Ord, Show)
+
+tokStreamInput :: TokStream -> Text
+tokStreamInput = T.concat . fmap (showSToken . tokenVal) . unTokStream
+
+unTokStream :: TokStream -> [WithPos SToken]
+unTokStream (TokStream toks) = toks
 
 instance ShowErrorComponent TokStream where 
   showErrorComponent stream = show stream
@@ -89,24 +135,24 @@ instance Stream TokStream where
   chunkToTokens Proxy = id
   chunkLength Proxy = length
   chunkEmpty Proxy = null
-  take1_ (TokStream _ []) = Nothing
-  take1_ (TokStream str (t:ts)) = Just
+  take1_ (TokStream []) = Nothing
+  take1_ (TokStream (t:ts)) = Just
     ( t
-    , TokStream (T.drop (tokensLength pxy (t:|[])) str) ts
+    , TokStream ts
     )
-  takeN_ n (TokStream str s)
-    | n <= 0    = Just ([], TokStream str s)
+  takeN_ n (TokStream s)
+    | n <= 0    = Just ([], TokStream s)
     | null s    = Nothing
     | otherwise =
         let (x, s') = splitAt n s
         in case NE.nonEmpty x of
-          Nothing -> Just (x, TokStream str s')
-          Just nex -> Just (x, TokStream (T.drop (tokensLength pxy nex) str) s')
-  takeWhile_ f (TokStream str s) =
+          Nothing -> Just (x, TokStream s')
+          Just nex -> Just (x, TokStream s')
+  takeWhile_ f (TokStream s) =
     let (x, s') = DL.span f s
     in case NE.nonEmpty x of
-      Nothing -> (x, TokStream str s')
-      Just nex -> (x, TokStream (T.drop (tokensLength pxy nex) str) s')
+      Nothing -> (x, TokStream s')
+      Just nex -> (x, TokStream s')
   showTokens Proxy = T.unpack
     . T.unwords
     . NE.toList
@@ -116,10 +162,7 @@ instance Stream TokStream where
   reachOffset o PosState {..} =
     ( prefix ++ T.unpack restOfLine
     , PosState
-        { pstateInput = TokStream
-            { tokStreamInput = postStr
-            , unTokStream = post
-            }
+        { pstateInput = TokStream post
         , pstateOffset = max pstateOffset o
         , pstateSourcePos = newSourcePos
         , pstateTabWidth = pstateTabWidth

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5938607a26533f60760d77d32593d92fdffb3e1d9afdaa6b14bb0c38520bfee8
+-- hash: 133289668199d083614b0047ffe3f7a5a786f5dbc224d88885e50f28bf2b98f5
 
 name:           ss2
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
     , megaparsec
     , neat-interpolation
     , parser-combinators
+    , safe
     , text
   default-language: Haskell2010
 
@@ -56,6 +57,7 @@ executable ss2-exe
     , megaparsec
     , neat-interpolation
     , parser-combinators
+    , safe
     , ss2
     , text
   default-language: Haskell2010
@@ -75,6 +77,7 @@ test-suite ss2-test
     , megaparsec
     , neat-interpolation
     , parser-combinators
+    , safe
     , ss2
     , tasty
     , tasty-hunit
