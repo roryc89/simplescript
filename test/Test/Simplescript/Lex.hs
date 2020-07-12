@@ -50,6 +50,13 @@ mul x y = x * y + 2
 
 append a b = (a ++ b)
 |]
+      , T.strip [text|
+mul x y = 
+    x * y + 2
+
+append a b = 
+    (a ++ b)
+|]
       ]
     ]
 
