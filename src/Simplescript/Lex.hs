@@ -38,15 +38,25 @@ pLine = Lexer.indentBlock spacesNewlines p
         return $ Lexer.IndentMany Nothing (return . Line tokens) pLine
 
 -- lexeme 
-
-lineComment :: Parser ()
-lineComment = Lexer.skipLineComment "#"
-
 spacesNewlines :: Parser ()
 spacesNewlines = Lexer.space CharParser.space1 lineComment empty
 
 spaces :: Parser ()
-spaces = Lexer.space (void takeLine) lineComment empty
+spaces = Lexer.space (void $ Parsec.takeWhile1P Nothing pred) lineComment empty
+  where
+    pred c = c == ' ' || c == '\t'
+
+-- lexeme :: Parser a -> Parser a
+-- lexeme = Lexer.lexeme spaces
+
+lineComment :: Parser ()
+lineComment = Lexer.skipLineComment "#"
+
+-- spacesNewlines :: Parser ()
+-- spacesNewlines = Lexer.space CharParser.space1 lineComment empty
+
+-- spaces :: Parser ()
+-- spaces = Lexer.space (void takeLine) lineComment empty
 
 takeLine :: Parser Text
 takeLine = Parsec.takeWhile1P Nothing pred
@@ -59,7 +69,7 @@ lexeme = Lexer.lexeme spaces
 -- tokens
 
 pSTokens :: Parser [WithPos SToken]
-pSTokens = Parsec.manyTill pSToken (Parsec.eof <|> void CharParser.eol)
+pSTokens = Parsec.many pSToken
 
 pSToken :: Parser (WithPos SToken) 
 pSToken = lexeme $ withPos $ choice 

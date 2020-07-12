@@ -38,6 +38,13 @@ tests = testGroup "Lexer"
                 Right 
                   [ Line [Identifier "a"] [ Line [Number 10] []]
                   ]
+
+        , testCase "multiple indented" $
+            runLexerWoPos "a\n    10.0\nb\n  c" @?= 
+                Right 
+                  [ Line [Identifier "a"] [ Line [Number 10] []]
+                  , Line [Identifier "b"] [ Line [Identifier "c"] []]
+                  ]
         ]
     , testGroup "Round trip tests" $ fmap roundTripTest
       [ "([{}])" 
@@ -51,10 +58,10 @@ mul x y = x * y + 2
 append a b = (a ++ b)
 |]
       , T.strip [text|
-mul x y = 
+mul x y =
     x * y + 2
 
-append a b = 
+append a b =
     (a ++ b)
 |]
       ]
