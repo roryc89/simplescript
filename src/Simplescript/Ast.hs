@@ -8,7 +8,7 @@ import Text.Megaparsec.Pos (SourcePos)
 
 type ModulePos = Module Positions
 
-data Module a 
+newtype Module a 
     = Module 
     { statements :: [Statement a] 
     }
@@ -24,7 +24,7 @@ data Statement a
 type TypePos = Type Positions
 
 data Type a
-    = TypeIdentifier Text
+    = TypeIdentifier a Text
     | TypeApply a (Type a) (Type a)
     | TypeOperator a Text (Type a) (Type a)
     deriving (Show, Eq, Ord, Functor)
@@ -32,11 +32,11 @@ data Type a
 type ExprPos = Expr Positions
 
 data Expr a
-    = Var Text
+    = Var a Text
     | Apply a (Expr a) (Expr a)
     | Parens a (Expr a)
     | Let a [Statement a] (Expr a)
-    | Lit a (Literal a)
+    | Lit (Literal a)
     deriving (Show, Eq, Ord, Functor)
 
 type LiteralPos = Literal Positions
@@ -45,12 +45,10 @@ data Literal a
     = IntLit a Int
     | NumberLit a Double
     | StringLit a Text 
-    | ListLit a [(Literal a)]
-    | RecordLit a [(Text, (Expr a))]
+    | ListLit a [Literal a]
+    | RecordLit a [(Text, Expr a)]
     | FunctionLit a [Text] (Expr a) 
     deriving (Show, Eq, Ord, Functor)
-
--- 
 
 data Positions = Positions 
     { startPos :: SourcePos

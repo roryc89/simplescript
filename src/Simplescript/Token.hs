@@ -48,7 +48,7 @@ insertBlankLines (row1:row2:tail) = row1 : (replicate blanks [] <> insertBlankLi
             _ -> 0
           
         row1IdxMay = getRow <$>  headMay row1
-        nextRowIdxMay = getRow <$> (headMay =<< DL.find ((/=) []) (row2:tail))
+        nextRowIdxMay = getRow <$> (headMay =<< DL.find (/= []) (row2:tail))
 
         getRow = unPos . sourceLine . startPos
 
@@ -58,7 +58,8 @@ removePositions :: TokenAndPosLine -> Line [SToken]
 removePositions = fmap (fmap tokenVal)
 
 data SToken 
-    = Identifier Text
+    = Keyword Keyword
+    | Identifier Text
     | Int Int
     | Number Double
     | Operator Text
@@ -75,6 +76,20 @@ data SToken
     | RBrace
     | LSquareBracket
     | RSquareBracket
+    deriving (Eq, Ord, Show)
+
+data Keyword 
+    = Let 
+    | In 
+    | Case 
+    | Of 
+    | Is 
+    | If 
+    | Then 
+    | Else 
+    | Import
+    | Export
+    | Help
     deriving (Eq, Ord, Show)
 
 showSTokensWithIdent :: [WithPos SToken] -> Text
@@ -106,13 +121,14 @@ showSToken = \case
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
+    Keyword k -> T.toLower $ T.pack $ show k
 
 data WithPos a = WithPos
   { startPos :: SourcePos
   , endPos :: SourcePos
   , tokenLength :: Int
   , tokenVal :: a
-  } deriving (Eq, Ord, Show)
+  } deriving (Eq, Ord, Show, Functor)
 
 
 newtype TokStream = TokStream [WithPos SToken]
