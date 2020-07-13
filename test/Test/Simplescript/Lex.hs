@@ -40,10 +40,10 @@ tests = testGroup "Lexer"
                   ]
 
         , testCase "multiple indented" $
-            runLexerWoPos "a\n    10.0\nb\n  c" @?= 
+            runLexerWoPos "a\n    10.0\nb\n  =>" @?= 
                 Right 
                   [ Line [Identifier "a"] [ Line [Number 10] []]
-                  , Line [Identifier "b"] [ Line [Identifier "c"] []]
+                  , Line [Identifier "b"] [ Line [Arrow] []]
                   ]
         ]
     , testGroup "Round trip tests" $ fmap roundTripTest

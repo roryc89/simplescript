@@ -66,6 +66,7 @@ data SToken
     | SString Text
     | Assign
     | Backslash
+    | Arrow
     | Colon
     | Comma
     | LParen 
@@ -74,7 +75,6 @@ data SToken
     | RBrace
     | LSquareBracket
     | RSquareBracket
-    | Eol -- Not used in parsing but for joining lines
     deriving (Eq, Ord, Show)
 
 showSTokensWithIdent :: [WithPos SToken] -> Text
@@ -96,6 +96,7 @@ showSToken = \case
     Int n -> T.pack $ show n
     Number n -> T.pack $ show n
     Assign -> "="
+    Arrow -> "=>"
     Backslash -> "\\"
     Colon -> ":"
     Comma -> ","
@@ -105,7 +106,6 @@ showSToken = \case
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
-    Eol -> "\n"
 
 data WithPos a = WithPos
   { startPos :: SourcePos
@@ -191,8 +191,7 @@ instance Stream TokStream where
 pxy :: Proxy TokStream
 pxy = Proxy
 
-
-liftSToken :: SToken -> WithPos SToken
-liftSToken = WithPos pos pos 0
-  where
-    pos = initialPos ""
+-- liftSToken :: SToken -> WithPos SToken
+-- liftSToken = WithPos pos pos 0
+--   where
+--     pos = initialPos ""

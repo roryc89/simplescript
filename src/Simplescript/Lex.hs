@@ -1,6 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections     #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 module Simplescript.Lex where
 
@@ -15,7 +13,7 @@ import           NeatInterpolation          (text)
 import qualified Text.Megaparsec            as Parsec
 import           Text.Megaparsec            (choice, many, some, (<|>))
 import qualified Text.Megaparsec.Char       as CharParser
-import           Text.Megaparsec.Char       (char)
+import           Text.Megaparsec.Char       (char, string)
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 import Simplescript.Token (SToken(..), Line(..), WithPos(..), TokenAndPosLine, showSToken)
 
@@ -33,30 +31,19 @@ pLine :: Parser TokenAndPosLine
 pLine = Lexer.indentBlock spacesNewlines p
   where
     p = do
-        -- t <- Parsec.lookAhead $ Parsec.takeWhileP Nothing (/= '\n')
         tokens <- pSTokens
         return $ Lexer.IndentMany Nothing (return . Line tokens) pLine
 
 -- lexeme 
+
 spacesNewlines :: Parser ()
 spacesNewlines = Lexer.space CharParser.space1 lineComment empty
 
 spaces :: Parser ()
-spaces = Lexer.space (void $ Parsec.takeWhile1P Nothing pred) lineComment empty
-  where
-    pred c = c == ' ' || c == '\t'
-
--- lexeme :: Parser a -> Parser a
--- lexeme = Lexer.lexeme spaces
+spaces = Lexer.space (void takeLine) lineComment empty
 
 lineComment :: Parser ()
-lineComment = Lexer.skipLineComment "#"
-
--- spacesNewlines :: Parser ()
--- spacesNewlines = Lexer.space CharParser.space1 lineComment empty
-
--- spaces :: Parser ()
--- spaces = Lexer.space (void takeLine) lineComment empty
+lineComment = Lexer.skipLineComment "//"
 
 takeLine :: Parser Text
 takeLine = Parsec.takeWhile1P Nothing pred
@@ -73,7 +60,8 @@ pSTokens = Parsec.many pSToken
 
 pSToken :: Parser (WithPos SToken) 
 pSToken = lexeme $ withPos $ choice 
-    [ Assign <$ char '='
+    [ Arrow <$ string "=>"
+    , Assign <$ char '='
     , Backslash <$ char '\\'
     , Colon <$ char ':'
     , Comma <$ char ','
