@@ -28,8 +28,14 @@ data Line a = Line
     }
     deriving (Eq, Ord, Show, Functor)
 
-flattenLines :: Monoid a => Line a -> a
-flattenLines Line{..} = line <> foldMap flattenLines indented
+flattenLines :: [Line [WithPos SToken]] -> [WithPos SToken]
+-- flattenLines =  DL.intercalate [] . fmap flattenLine
+flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
+
+flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
+flattenLine Line{..} = 
+  line <> flattenLines indented
+  -- line <> (liftSToken IndentedNewline : flattenLines indented)
 
 linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)
@@ -76,6 +82,8 @@ data SToken
     | RBrace
     | LSquareBracket
     | RSquareBracket
+    | Newline
+    | IndentedNewline
     deriving (Eq, Ord, Show)
 
 data Keyword 
@@ -104,6 +112,7 @@ showSTokensWithIdent = go ""
 
 showSToken :: SToken -> Text
 showSToken = \case
+    Keyword k -> T.toLower $ T.pack $ show k
     Identifier s -> s
     Operator s -> s
     SChar s -> T.singleton s
@@ -121,7 +130,8 @@ showSToken = \case
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
-    Keyword k -> T.toLower $ T.pack $ show k
+    Newline -> "\n"
+    IndentedNewline -> "\n"
 
 data WithPos a = WithPos
   { startPos :: SourcePos
@@ -207,7 +217,7 @@ instance Stream TokStream where
 pxy :: Proxy TokStream
 pxy = Proxy
 
--- liftSToken :: SToken -> WithPos SToken
--- liftSToken = WithPos pos pos 0
---   where
---     pos = initialPos ""
+liftSToken :: SToken -> WithPos SToken
+liftSToken = WithPos pos pos 0
+  where
+    pos = initialPos ""

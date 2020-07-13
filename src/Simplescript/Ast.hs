@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE DeriveFoldable       #-}
 
 module Simplescript.Ast where
 
@@ -12,14 +13,14 @@ newtype Module a
     = Module 
     { statements :: [Statement a] 
     }
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Foldable)
 
 type StatementPos = Statement Positions
 
 data Statement a
     = TypeAnnotation a Text (Type a)
     | VarDeclaration a Text (Expr a)
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Foldable)
 
 type TypePos = Type Positions
 
@@ -27,7 +28,7 @@ data Type a
     = TypeIdentifier a Text
     | TypeApply a (Type a) (Type a)
     | TypeOperator a Text (Type a) (Type a)
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Foldable)
 
 type ExprPos = Expr Positions
 
@@ -37,7 +38,7 @@ data Expr a
     | Parens a (Expr a)
     | Let a [Statement a] (Expr a)
     | Lit (Literal a)
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Foldable)
 
 type LiteralPos = Literal Positions
 
@@ -48,7 +49,7 @@ data Literal a
     | ListLit a [Literal a]
     | RecordLit a [(Text, Expr a)]
     | FunctionLit a [Text] (Expr a) 
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Foldable)
 
 data Positions = Positions 
     { startPos :: SourcePos

@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 
-module Simplescript.Parse where 
+module Simplescript.Parse (parseText) where 
 
 import           Control.Applicative        (empty)
 import           Control.Monad              (void)
@@ -21,16 +21,30 @@ import qualified Text.Megaparsec.Char       as CharParser
 import           Text.Megaparsec.Char       (char, string)
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 import qualified Simplescript.Token as Tok
+import qualified Simplescript.Lex as Lex
 import Simplescript.Token (WithPos(..), SToken)
 import Simplescript.Ast
+import Simplescript.Error (ParseOrLexError(..))
 
 type Parser = Parsec.Parsec Void Tok.TokStream
 
--- sLex :: T.Text -> Either (Parsec.ParseErrorBundle T.Text Void) [TokenAndPosLine]
--- sLex = Parsec.runParser pLines "" 
-sParseText :: Tok.TokenAndPosLine -> Either (Parsec.ParseErrorBundle T.Text Void) [StatementPos] 
-sParseText = undefined 
+parseText :: T.Text -> Either ParseOrLexError [StatementPos]
+parseText input = case Lex.sLex input of 
+    Left lexErr -> Left $ LexError lexErr
+    Right toks -> 
+        case sParseTopLevelStatements $ Tok.TokStream $ Tok.flattenLines toks of 
+            Left parseErr -> Left $ ParseError parseErr 
+            Right result -> Right result
+
+
+sParseTopLevelStatements :: Tok.TokStream -> Either (Parsec.ParseErrorBundle Tok.TokStream Void) [StatementPos] 
+sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel "" 
+
 -- STATEMENTS
+
+pStatementsTopLevel :: Parser [StatementPos]
+pStatementsTopLevel = Parsec.manyTill pStatement Parsec.eof
+
 
 pStatement :: Parser StatementPos
 pStatement = choice
@@ -39,36 +53,44 @@ pStatement = choice
     ]
 
 pTypeAnnotation :: Parser StatementPos
-pTypeAnnotation = undefined
+pTypeAnnotation = do 
+    name <- pIdentifier
+    colon <- tokEq Tok.Colon
+    TypeAnnotation 
+        (Positions (Tok.startPos name) (Tok.endPos colon))
+        (tokenVal name)
+        <$> pType
+
   
 pVarDeclaration :: Parser StatementPos
-pVarDeclaration = undefined 
+pVarDeclaration = do 
+    name <- pIdentifier
+    assign <- tokEq Tok.Assign 
+    VarDeclaration 
+        (Positions (Tok.startPos name) (Tok.endPos assign))
+        (tokenVal name)
+        <$> pExpr
 
 -- TYPES 
 pType :: Parser TypePos
 pType = choice
     [ pTypeIdentifier
-    , pTypeApply
-    , pTypeOperator
+    -- , pTypeApply TODO: Handle with operator table
+    -- , pTypeOperator
     ]
 
 pTypeIdentifier :: Parser TypePos
-pTypeIdentifier = undefined
+pTypeIdentifier = addPositions TypeIdentifier <$> pIdentifier 
 
-pTypeApply :: Parser TypePos
-pTypeApply = undefined
-
-pTypeOperator :: Parser TypePos
-pTypeOperator = undefined
 
 -- EXPRESSIONS
 
 pExpr :: Parser ExprPos
 pExpr = choice 
-    [ pVar
+    [ pLit
+    , pVar
     , pParens
     , pLet
-    , pLit
     ]
 
 pVar :: Parser ExprPos
