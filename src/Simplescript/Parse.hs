@@ -19,6 +19,7 @@ import qualified Text.Megaparsec            as Parsec
 import           Text.Megaparsec            (choice, many, some, (<|>))
 import qualified Text.Megaparsec.Char       as CharParser
 import           Text.Megaparsec.Char       (char, string)
+import           Text.Megaparsec.Debug
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 import qualified Simplescript.Token as Tok
 import qualified Simplescript.Lex as Lex
@@ -43,7 +44,7 @@ sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel ""
 -- STATEMENTS
 
 pStatementsTopLevel :: Parser [StatementPos]
-pStatementsTopLevel = lexeme (Parsec.manyTill (lexeme pStatement) Parsec.eof)
+pStatementsTopLevel = Parsec.manyTill (lexeme pStatement) Parsec.eof
 
 pNewline :: Parser (WithPos SToken)
 pNewline = tokEq Tok.Newline 
@@ -109,13 +110,21 @@ pParens = do
             inside
 
 pLet :: Parser ExprPos
-pLet = do 
-    let_ <- tokEq (Tok.Keyword Tok.Let)
-    statements <- many pStatement 
-    in_ <- tokEq Tok.RParen
-    e <- pExpr
-    Let (Positions (Tok.startPos let_) (Tok.endPos in_)) statements
-        <$> pExpr
+pLet = dbg "pLet" $ do 
+    let_ <- dbg "let_" $ lexeme (tokEq (Tok.Keyword Tok.Let))
+
+    statements <- dbg "statements" $ 
+        Parsec.manyTill (lexeme pStatement) pIn
+
+    -- void $ Parsec.optional pNewline
+    -- void $ Parsec.optional pNewline
+    spaces
+
+    Let (Positions (Tok.startPos let_) (Tok.endPos let_)) statements
+        <$> dbg "e" pExpr
+
+pIn :: Parser (WithPos SToken)
+pIn =  tokEq (Tok.Keyword Tok.In)
 
 pLit :: Parser ExprPos
 pLit = Lit <$> pLiteral
