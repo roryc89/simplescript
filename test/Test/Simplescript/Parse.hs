@@ -94,7 +94,7 @@ tests = testGroup "Parse"
                     @?= Right 
                         [ TypeAnnotation 
                             ()
-                            "applied"
+                            "val"
                             (TypeOp () "+" (TypeIdentifier () "a") (TypeIdentifier () "b"))
                         ]
         ,  

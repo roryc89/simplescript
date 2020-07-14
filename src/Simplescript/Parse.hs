@@ -27,6 +27,7 @@ import Simplescript.Token (WithPos(..), SToken)
 import Simplescript.Ast
 import Simplescript.Error (ParseOrLexError(..))
 import Simplescript.Parse.Operator (operatorTable)
+import Simplescript.Parse.TypeOperator (typeOperatorTable)
 import Control.Monad.Combinators.Expr (makeExprParser)
 
 type Parser = Parsec.Parsec Void Tok.TokStream
@@ -78,10 +79,11 @@ pVarDeclaration = do
 
 -- TYPES 
 pType :: Parser TypePos
-pType = choice
+pType = makeExprParser pTypeTerms typeOperatorTable
+
+pTypeTerms :: Parser TypePos
+pTypeTerms = choice
     [ pTypeIdentifier
-    -- , pTypeApply TODO: Handle with operator table
-    -- , pTypeOperator
     ]
 
 pTypeIdentifier :: Parser TypePos
