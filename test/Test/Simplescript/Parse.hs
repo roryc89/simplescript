@@ -53,14 +53,41 @@ tests = testGroup "Parse"
                         ]
 
 
-        ,  testCase "function declaration" $
+        ,  testCase "function literal" $
                 parseTextWoPos "const = \\a, b => b" 
                     @?= Right 
                         [ VarDeclaration 
                             ()
-                            "applied"
+                            "const"
                             (Lit $ FunctionLit () ["a", "b"] (Var () "b"))
                         ]
+
+        ,  testCase "list literal" $
+                parseTextWoPos "l = [a, 2]" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "l"
+                            (Lit $ ListLit ()
+                                [ Var () "a"
+                                , Lit $ IntLit () 2
+                                ]
+                            )
+                        ]
+
+        ,  testCase "record literal" $
+                parseTextWoPos "rec = {a = 1, b = x}" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "rec"
+                            (Lit $ RecordLit () 
+                                [ ("a" , Lit $ IntLit () 1)
+                                , ("b" , Var () "x")
+                                ]
+                            )
+                        ]
+
 
         ,  testCase "function application" $
                 parseTextWoPos "applied = a b" 

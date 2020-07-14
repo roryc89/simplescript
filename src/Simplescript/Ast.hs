@@ -47,7 +47,7 @@ data Literal a
     = IntLit a Int
     | NumberLit a Double
     | StringLit a Text 
-    | ListLit a [Literal a]
+    | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
     | FunctionLit a [Text] (Expr a) 
     deriving (Show, Eq, Ord, Functor, Foldable)
