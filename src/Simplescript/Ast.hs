@@ -35,6 +35,7 @@ type ExprPos = Expr Positions
 data Expr a
     = Var a Text
     | Apply a (Expr a) (Expr a)
+    | Operator a Text (Expr a) (Expr a)
     | Parens a (Expr a)
     | Let a [Statement a] (Expr a)
     | Lit (Literal a)

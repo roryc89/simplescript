@@ -51,6 +51,52 @@ tests = testGroup "Parse"
                             "val"
                             (TypeIdentifier (Positions (sp 1 7)  (sp 1 10)) "Int" )
                         ]
+
+
+        ,  testCase "function declaration" $
+                parseTextWoPos "const = \\a, b => b" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "applied"
+                            (Lit $ FunctionLit () ["a", "b"] (Var () "b"))
+                        ]
+
+        ,  testCase "function application" $
+                parseTextWoPos "applied = a b" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "applied"
+                            (Apply () (Var () "a") (Var () "b"))
+                        ]
+
+        ,  testCase "type application" $
+                parseTextWoPos "applied : A B" 
+                    @?= Right 
+                        [ TypeAnnotation 
+                            ()
+                            "applied"
+                            (TypeApply () (TypeIdentifier () "A") (TypeIdentifier () "B"))
+                        ]
+
+        ,  testCase "operator application" $
+                parseTextWoPos "val = a + b" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "applied"
+                            (Operator () "+" (Var () "a") (Var () "b"))
+                        ]
+
+        ,  testCase "type operator application" $
+                parseTextWoPos "val : a + b" 
+                    @?= Right 
+                        [ TypeAnnotation 
+                            ()
+                            "applied"
+                            (TypeOperator () "+" (TypeIdentifier () "a") (TypeIdentifier () "b"))
+                        ]
         ,  
             let 
                 result  = 

@@ -44,7 +44,7 @@ sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel ""
 -- STATEMENTS
 
 pStatementsTopLevel :: Parser [StatementPos]
-pStatementsTopLevel = Parsec.manyTill (lexeme pStatement) Parsec.eof
+pStatementsTopLevel = Parsec.manyTill (lexemeNewAndIndent pStatement) Parsec.eof
 
 pNewline :: Parser (WithPos SToken)
 pNewline = tokEq Tok.Newline 
@@ -111,12 +111,12 @@ pParens = do
 
 pLet :: Parser ExprPos
 pLet = dbg "pLet" $ do 
-    let_ <- dbg "let_" $ lexeme (tokEq (Tok.Keyword Tok.Let))
+    let_ <- dbg "let_" $ lexemeNewAndIndent (tokEq (Tok.Keyword Tok.Let))
 
     statements <- dbg "statements" $ 
-        Parsec.manyTill (lexeme pStatement) pIn
+        Parsec.manyTill (lexemeNewAndIndent pStatement) pIn
 
-    spaces
+    newAndIndents
 
     Let (Positions (Tok.startPos let_) (Tok.endPos let_)) statements
         <$> dbg "e" pExpr
@@ -171,17 +171,16 @@ pDouble = tokNoErr (\case
 
 -- LEXEME 
 
--- 
-spaces :: Parser ()
-spaces = Lexer.space (void takeNewlinesAndIndent) empty empty
+newAndIndents :: Parser ()
+newAndIndents = Lexer.space (void takeNewAndIndent) empty empty
 
-takeNewlinesAndIndent :: Parser [WithPos SToken]
-takeNewlinesAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
+takeNewAndIndent :: Parser [WithPos SToken]
+takeNewAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
   where
     pred t = t == Tok.Newline || t == Tok.Newline
 
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme spaces
+lexemeNewAndIndent :: Parser a -> Parser a
+lexemeNewAndIndent = Lexer.lexeme newAndIndents
 
 -- UTILS 
 
