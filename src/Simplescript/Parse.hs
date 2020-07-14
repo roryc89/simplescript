@@ -11,7 +11,7 @@ import           Data.Char                  (isDigit, isAlpha, isAlphaNum)
 import           Data.Text                  (unpack, Text)
 import qualified Data.Text                  as T
 import qualified Data.List                  as DL
-import Data.Set as Set
+import qualified Data.Set as Set
 import qualified Text.Read as R
 import           Data.Void                  (Void)
 import           NeatInterpolation          (text)
@@ -43,8 +43,10 @@ sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel ""
 -- STATEMENTS
 
 pStatementsTopLevel :: Parser [StatementPos]
-pStatementsTopLevel = Parsec.manyTill pStatement Parsec.eof
+pStatementsTopLevel = Parsec.manyTill (lexemeNewlinesAndIndent pStatement) Parsec.eof
 
+pNewline :: Parser (WithPos SToken)
+pNewline = tokEq Tok.Newline 
 
 pStatement :: Parser StatementPos
 pStatement = choice
@@ -159,6 +161,20 @@ pDouble = tokNoErr (\case
         Tok.Number n -> Just n
         _ -> Nothing
     )
+
+-- LEXEME 
+
+-- 
+newlinesAndIndent :: Parser ()
+newlinesAndIndent = Lexer.space (void takeNewlinesAndIndent) empty empty
+
+takeNewlinesAndIndent :: Parser [WithPos SToken]
+takeNewlinesAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
+  where
+    pred t = t == Tok.Newline || t == Tok.IndentedNewline 
+
+lexemeNewlinesAndIndent :: Parser a -> Parser a
+lexemeNewlinesAndIndent = Lexer.lexeme newlinesAndIndent
 
 -- UTILS 
 

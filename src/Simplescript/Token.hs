@@ -29,13 +29,11 @@ data Line a = Line
     deriving (Eq, Ord, Show, Functor)
 
 flattenLines :: [Line [WithPos SToken]] -> [WithPos SToken]
--- flattenLines =  DL.intercalate [] . fmap flattenLine
 flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
 
 flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
 flattenLine Line{..} = 
-  line <> flattenLines indented
-  -- line <> (liftSToken IndentedNewline : flattenLines indented)
+  line <> (liftSToken IndentedNewline : flattenLines indented)
 
 linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)
