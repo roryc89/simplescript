@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cfbc7b65607bd574bfad70bdc12ebfbc7d43cc2527844068f70bf244265fc7ec
+-- hash: b97e121350f13990d3a35b85d2c269dbd7866951417d19e130ba2d2c19c821f6
 
 name:           ss2
 version:        0.1.0.0
@@ -44,6 +44,7 @@ library
     , neat-interpolation
     , parser-combinators
     , safe
+    , tasty-rerun
     , text
   default-language: Haskell2010
 
@@ -62,6 +63,7 @@ executable ss2-exe
     , parser-combinators
     , safe
     , ss2
+    , tasty-rerun
     , text
   default-language: Haskell2010
 
@@ -85,5 +87,6 @@ test-suite ss2-test
     , ss2
     , tasty
     , tasty-hunit
+    , tasty-rerun
     , text
   default-language: Haskell2010

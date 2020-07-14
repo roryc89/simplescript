@@ -33,7 +33,8 @@ flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
 
 flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
 flattenLine Line{..} = 
-  line <> (liftSToken IndentedNewline : flattenLines indented)
+  line <> flattenLines indented
+  -- line <> (liftSToken IndentedNewline : flattenLines indented)
 
 linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)
@@ -128,8 +129,8 @@ showSToken = \case
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
-    Newline -> "\n"
-    IndentedNewline -> "\n"
+    Newline -> "\nNewline"
+    IndentedNewline -> "\nIndentedNewline"
 
 data WithPos a = WithPos
   { startPos :: SourcePos

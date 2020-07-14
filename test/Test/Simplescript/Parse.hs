@@ -52,7 +52,7 @@ tests = testGroup "Parse"
                             (TypeIdentifier (Positions (sp 1 7)  (sp 1 10)) "Int" )
                         ]
         ]
-    , testGroup "muliline" 
+    , testGroup "multiline" 
         [  testCase "integer values" $
                 parseText "val = 22\nval2 = 42" 
                     @?= Right 
@@ -66,21 +66,13 @@ tests = testGroup "Parse"
                             (Lit $ IntLit (Positions (sp 2 8)  (sp 2 10)) 42)
 
                         ]
-        ,  testCase "string value" $
-                parseText "val = \"a\"" 
+        ,  testCase "string value indented" $
+                parseText "val = \n    \"a\"" 
                     @?= Right 
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ StringLit (Positions (sp 1 7)  (sp 1 10)) "a" )
-                        ]
-        ,  testCase "type annotation" $
-                parseText "val : Int" 
-                    @?= Right 
-                        [ TypeAnnotation 
-                            (Positions (sp 1 1)  (sp 1 6))
-                            "val"
-                            (TypeIdentifier (Positions (sp 1 7)  (sp 1 10)) "Int" )
+                            (Lit $ StringLit (Positions (sp 2 5)  (sp 2 8)) "a" )
                         ]
         ]
     ]

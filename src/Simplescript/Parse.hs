@@ -43,7 +43,7 @@ sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel ""
 -- STATEMENTS
 
 pStatementsTopLevel :: Parser [StatementPos]
-pStatementsTopLevel = Parsec.manyTill (lexemeNewlinesAndIndent pStatement) Parsec.eof
+pStatementsTopLevel = lexeme (Parsec.manyTill (lexeme pStatement) Parsec.eof)
 
 pNewline :: Parser (WithPos SToken)
 pNewline = tokEq Tok.Newline 
@@ -164,13 +164,17 @@ pDouble = tokNoErr (\case
 
 -- LEXEME 
 
+-- 
+spaces :: Parser ()
+spaces = Lexer.space (void takeNewlinesAndIndent) empty empty
+
 takeNewlinesAndIndent :: Parser [WithPos SToken]
 takeNewlinesAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
   where
-    pred t = t == Tok.Newline || t == Tok.IndentedNewline 
+    pred t = t == Tok.Newline || t == Tok.Newline
 
-lexemeNewlinesAndIndent :: Parser a -> Parser a
-lexemeNewlinesAndIndent = Lexer.lexeme  (void takeNewlinesAndIndent)
+lexeme :: Parser a -> Parser a
+lexeme = Lexer.lexeme spaces
 
 -- UTILS 
 

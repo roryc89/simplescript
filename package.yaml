@@ -27,6 +27,7 @@ dependencies:
 - parser-combinators
 - containers
 - safe
+- tasty-rerun
 
 library:
   source-dirs: src

@@ -2,8 +2,10 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Simplescript.Lex as Lex
 import qualified Test.Simplescript.Parse as Parse
+import Test.Tasty.Ingredients.Rerun
 
-main = defaultMain tests
+
+main = defaultMainWithRerun tests
 
 tests :: TestTree
 tests = testGroup "Tests"
