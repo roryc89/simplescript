@@ -174,7 +174,7 @@ takeNewlinesAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
     pred t = t == Tok.Newline || t == Tok.IndentedNewline 
 
 lexemeNewlinesAndIndent :: Parser a -> Parser a
-lexemeNewlinesAndIndent = Lexer.lexeme newlinesAndIndent
+lexemeNewlinesAndIndent = Lexer.lexeme  (void takeNewlinesAndIndent)
 
 -- UTILS 
 
