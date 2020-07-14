@@ -155,7 +155,8 @@ val =
                             "val"
                             ( Let 
                                 () 
-                                [ VarDeclaration () "a" (Lit $ IntLit () 1)
+                                [ TypeAnnotation () "a" (TypeIdentifier () "Int")
+                                , VarDeclaration () "a" (Lit $ IntLit () 1)
                                 , VarDeclaration () "b" (Lit $ StringLit () "string")
                                 ]
                                 ( Var () "c")
@@ -166,6 +167,7 @@ val =
                 [ testCase "multiple line with indent"  $ parseTextWoPos [text|
 val =
     let 
+        a : Int
         a = 1
         b = "string"
     in 
@@ -174,6 +176,7 @@ val =
                 , testCase "multiple line without indent (and extra space)"  $ parseTextWoPos [text|
 val =
     let 
+        a : Int
         a = 1
         b = "string"
     in 

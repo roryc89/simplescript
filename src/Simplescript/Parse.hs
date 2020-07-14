@@ -116,8 +116,6 @@ pLet = dbg "pLet" $ do
     statements <- dbg "statements" $ 
         Parsec.manyTill (lexeme pStatement) pIn
 
-    -- void $ Parsec.optional pNewline
-    -- void $ Parsec.optional pNewline
     spaces
 
     Let (Positions (Tok.startPos let_) (Tok.endPos let_)) statements
