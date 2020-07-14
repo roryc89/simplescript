@@ -164,10 +164,6 @@ pDouble = tokNoErr (\case
 
 -- LEXEME 
 
--- 
-newlinesAndIndent :: Parser ()
-newlinesAndIndent = Lexer.space (void takeNewlinesAndIndent) empty empty
-
 takeNewlinesAndIndent :: Parser [WithPos SToken]
 takeNewlinesAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
   where

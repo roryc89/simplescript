@@ -33,6 +33,16 @@ tests = testGroup "Parse"
                             "val"
                             (Lit $ StringLit (Positions (sp 1 7)  (sp 1 10)) "a" )
                         ]
+        ,  testCase "number and parens value" $
+                parseText "val = (10.0)" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            (Positions (sp 1 1)  (sp 1 6))
+                            "val"
+                            ( Parens 
+                                (Positions (sp 1 7)  (sp 1 12)) 
+                                (Lit $ NumberLit (Positions (sp 1 8)  (sp 1 12)) 10.0 ))
+                        ]
         ,  testCase "type annotation" $
                 parseText "val : Int" 
                     @?= Right 
