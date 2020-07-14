@@ -26,16 +26,16 @@ type TypePos = Type Positions
 
 data Type a
     = TypeIdentifier a Text
-    | TypeApply a (Type a) (Type a)
-    | TypeOperator a Text (Type a) (Type a)
+    | TypeApply (Type a) (Type a)
+    | TypeOp a Text (Type a) (Type a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type ExprPos = Expr Positions
 
 data Expr a
     = Var a Text
-    | Apply a (Expr a) (Expr a)
-    | Operator a Text (Expr a) (Expr a)
+    | Apply (Expr a) (Expr a)
+    | Op a Text (Expr a) (Expr a)
     | Parens a (Expr a)
     | Let a [Statement a] (Expr a)
     | Lit (Literal a)

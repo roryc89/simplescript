@@ -26,6 +26,8 @@ import qualified Simplescript.Lex as Lex
 import Simplescript.Token (WithPos(..), SToken)
 import Simplescript.Ast
 import Simplescript.Error (ParseOrLexError(..))
+import Simplescript.Parse.Operator (operatorTable)
+import Control.Monad.Combinators.Expr (makeExprParser)
 
 type Parser = Parsec.Parsec Void Tok.TokStream
 
@@ -89,7 +91,10 @@ pTypeIdentifier = addPositions TypeIdentifier <$> pIdentifier
 -- EXPRESSIONS
 
 pExpr :: Parser ExprPos
-pExpr = choice 
+pExpr = makeExprParser pTerms operatorTable
+
+pTerms :: Parser ExprPos
+pTerms = choice 
     [ pLit
     , pVar
     , pParens
@@ -110,16 +115,16 @@ pParens = do
             inside
 
 pLet :: Parser ExprPos
-pLet = dbg "pLet" $ do 
-    let_ <- dbg "let_" $ lexemeNewAndIndent (tokEq (Tok.Keyword Tok.Let))
+pLet = do 
+    let_ <- lexemeNewAndIndent (tokEq (Tok.Keyword Tok.Let))
 
-    statements <- dbg "statements" $ 
+    statements <-  
         Parsec.manyTill (lexemeNewAndIndent pStatement) pIn
 
     newAndIndents
 
     Let (Positions (Tok.startPos let_) (Tok.endPos let_)) statements
-        <$> dbg "e" pExpr
+        <$> pExpr
 
 pIn :: Parser (WithPos SToken)
 pIn =  tokEq (Tok.Keyword Tok.In)
@@ -187,9 +192,6 @@ lexemeNewAndIndent = Lexer.lexeme newAndIndents
 addPositions :: (Positions -> a -> b) -> WithPos a -> b
 addPositions c WithPos{..} = c (Positions{..}) tokenVal
 
-tokWPosNoErr :: (WithPos SToken -> Maybe a) -> Parser a
-tokWPosNoErr f = Parsec.token f Set.empty
-
 tokEq :: SToken -> Parser (WithPos SToken)
 tokEq t = Parsec.satisfy ((==) t . tokenVal)
 
@@ -201,3 +203,6 @@ tokNoErr f = tokWPosNoErr
                 Just $ WithPos startPos endPos tokenLength a 
             _ -> Nothing 
         )
+
+tokWPosNoErr :: (WithPos SToken -> Maybe a) -> Parser a
+tokWPosNoErr f = Parsec.token f Set.empty

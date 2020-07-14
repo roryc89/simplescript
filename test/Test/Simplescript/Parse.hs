@@ -68,7 +68,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "applied"
-                            (Apply () (Var () "a") (Var () "b"))
+                            (Apply (Var () "a") (Var () "b"))
                         ]
 
         ,  testCase "type application" $
@@ -77,7 +77,7 @@ tests = testGroup "Parse"
                         [ TypeAnnotation 
                             ()
                             "applied"
-                            (TypeApply () (TypeIdentifier () "A") (TypeIdentifier () "B"))
+                            (TypeApply (TypeIdentifier () "A") (TypeIdentifier () "B"))
                         ]
 
         ,  testCase "operator application" $
@@ -85,8 +85,8 @@ tests = testGroup "Parse"
                     @?= Right 
                         [ VarDeclaration 
                             ()
-                            "applied"
-                            (Operator () "+" (Var () "a") (Var () "b"))
+                            "val"
+                            (Op () "+" (Var () "a") (Var () "b"))
                         ]
 
         ,  testCase "type operator application" $
@@ -95,7 +95,7 @@ tests = testGroup "Parse"
                         [ TypeAnnotation 
                             ()
                             "applied"
-                            (TypeOperator () "+" (TypeIdentifier () "a") (TypeIdentifier () "b"))
+                            (TypeOp () "+" (TypeIdentifier () "a") (TypeIdentifier () "b"))
                         ]
         ,  
             let 
