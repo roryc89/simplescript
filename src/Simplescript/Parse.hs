@@ -147,6 +147,7 @@ pLiteral = choice
     [ pNumberLit
     , pIntLit
     , pStringLit
+    , pListLit
     ]
 
 pStringLit :: Parser LiteralPos
@@ -176,6 +177,13 @@ pDouble = tokNoErr (\case
         _ -> Nothing
     )
 
+pListLit :: Parser LiteralPos
+pListLit = do 
+    open <- tokEq Tok.LSquareBracket
+    items <- Parsec.sepBy pExpr (tokEq Tok.Comma)
+    close <- tokEq Tok.RSquareBracket
+    return $ ListLit (posBetween open close) items
+
 -- LEXEME 
 
 newAndIndents :: Parser ()
@@ -193,6 +201,10 @@ lexemeNewAndIndent = Lexer.lexeme newAndIndents
 
 addPositions :: (Positions -> a -> b) -> WithPos a -> b
 addPositions c WithPos{..} = c (Positions{..}) tokenVal
+
+posBetween :: WithPos a -> WithPos a1 -> Positions
+posBetween l r = Positions (Tok.startPos l) (Tok.endPos r)
+ 
 
 tokEq :: SToken -> Parser (WithPos SToken)
 tokEq t = Parsec.satisfy ((==) t . tokenVal)
