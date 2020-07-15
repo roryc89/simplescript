@@ -13,7 +13,8 @@ import Data.Proxy
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import Text.Megaparsec
+import Text.Megaparsec 
+import qualified Text.Megaparsec.Pos as Pos
 import qualified Data.List          as DL
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set           as Set
@@ -22,6 +23,7 @@ import Safe
 
 type TokenAndPosLine = Line [WithPos SToken]
 
+--  TODO: Remove Line adt and handle newlines in lexing
 data Line a = Line
     { line :: a
     , indented :: [Line a]
@@ -33,8 +35,22 @@ flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
 
 flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
 flattenLine Line{..} = 
-  line <> flattenLines indented
-  -- line <> (liftSToken IndentedNewline : flattenLines indented)
+  if (tokenVal <$> headMay line) /= Just (Keyword Let) 
+    && getIndentAt 0 indented == getIndentAt 1 indented 
+    then 
+    line <> foldMap flattenLine indented
+  else 
+    line <> flattenLines indented
+
+getIndentAt :: Int -> [TokenAndPosLine] -> Maybe Pos
+getIndentAt idx line = getIndent =<< atMay line idx 
+
+getIndent :: TokenAndPosLine -> Maybe Pos
+getIndent Line{..} = Pos.sourceColumn . startPos <$> headMay line
+
+-- removeIndentedNewlines :: [WithPos SToken] -> [WithPos SToken]
+-- removeIndentedNewlines (h1:h2:t) = t
+-- removeIndentedNewlines l = l
 
 linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)

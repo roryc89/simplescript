@@ -234,7 +234,7 @@ val =
                         ]
         ,  testCase "list literal vertically aligned" $
                 parseTextWoPos [text|
-rec = 
+l = 
     [ a
     , 2
     ]
@@ -272,7 +272,8 @@ rec =
 
         ,  testCase "function application vertically aligned" $
                 parseTextWoPos [text|
-rec = 
+applied 
+    = 
     a 
     b
                 |]
