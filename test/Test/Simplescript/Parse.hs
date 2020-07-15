@@ -88,6 +88,16 @@ tests = testGroup "Parse"
                             )
                         ]
 
+        ,  testCase "if expression" $
+                parseTextWoPos "x = if a then b else c" 
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "x"
+                            (If () (Var () "a") (Var () "b") (Var () "c")
+                            )
+                        ]
+
 
         ,  testCase "function application" $
                 parseTextWoPos "applied = a b" 

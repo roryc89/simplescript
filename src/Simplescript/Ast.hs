@@ -39,6 +39,8 @@ data Expr a
     | Op a Text (Expr a) (Expr a)
     | Parens a (Expr a)
     | Let a [Statement a] (Expr a)
+    | If a (Expr a) (Expr a) (Expr a)
+    | Case a (Expr a) [(Destructured a, Expr a)]
     | Lit (Literal a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
@@ -51,8 +53,6 @@ data Literal a
     | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
     | FunctionLit a [(Text, a)] (Expr a)
-    | IfLit a (Expr a) (Expr a) (Expr a)
-    | CaseLit a (Expr a) (Expr a) (Expr a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type CtrPos = Ctr Positions
@@ -65,3 +65,11 @@ data Positions = Positions
     , endPos :: SourcePos
     }    
     deriving (Show, Eq, Ord)
+
+data Destructured a 
+  = VarDes a
+  | CtrDes (Ctr a)
+  | ListDes a [Destructured a]
+  | RecordDes [(Text, a, Maybe (Destructured a))]
+    deriving (Show, Eq, Ord, Functor, Foldable)
+
