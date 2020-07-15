@@ -67,9 +67,12 @@ data Positions = Positions
     deriving (Show, Eq, Ord)
 
 data Destructured a 
-  = VarDes a
+  = VarDes a Text [Destructured a]
   | CtrDes (Ctr a)
+  | IntDes a Int
+  | NumberDes a Double
+  | StringDes a Text
   | ListDes a [Destructured a]
-  | RecordDes [(Text, a, Maybe (Destructured a))]
+  | RecordDes a [(Text, a, Maybe (Destructured a))]
     deriving (Show, Eq, Ord, Functor, Foldable)
 

@@ -249,7 +249,6 @@ pArg :: Parser (Text, Positions)
 pArg = go <$> pIdentifier
     where 
         go WithPos{..} = (tokenVal, Positions startPos endPos)
-    
 
 -- LEXEME 
 
