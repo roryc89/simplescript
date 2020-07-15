@@ -66,9 +66,10 @@ data Positions = Positions
     }    
     deriving (Show, Eq, Ord)
 
+type DestructuredPos = Destructured Positions
+
 data Destructured a 
   = VarDes a Text [Destructured a]
-  | CtrDes (Ctr a)
   | IntDes a Int
   | NumberDes a Double
   | StringDes a Text

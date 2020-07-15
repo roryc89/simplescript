@@ -122,6 +122,7 @@ pTerms = choice
     , pParens
     , pLet
     , pIf
+    , pCase
     ]
 
 pVar :: Parser ExprPos
@@ -164,6 +165,34 @@ pIf = do
         then_
         else_
 
+pCase :: Parser ExprPos
+pCase = do
+    caseK <- dbg "caseK" $ tokEq (Tok.Keyword Tok.Case)
+    case_ <- dbg "case_" $ pExpr
+    tokEq $ Tok.Keyword Tok.Of
+    openBr <- dbg "openBr" $ tokEq Tok.LBrace
+
+    branches <- dbg "branches" $  
+        -- Parsec.sepBy pBranch (tokEq Tok.Comma)
+        Parsec.sepBy (lexemeNewAndIndent pBranch) (tokEq Tok.Comma)
+
+    closeBr <- dbg "closeBr" $ tokEq Tok.RBrace
+
+    end <- dbg "end" $ Parsec.getSourcePos 
+    return 
+        $ Case
+            (Positions (Tok.startPos caseK) end)
+            case_
+            branches
+
+pBranch :: Parser (DestructuredPos, ExprPos)
+pBranch = do 
+    if_ <- pDestructured
+    tokEq Tok.Arrow
+    then_ <- pExpr
+    return (if_, then_)
+    
+
 pIn :: Parser (WithPos SToken)
 pIn =  tokEq (Tok.Keyword Tok.In)
 
@@ -175,6 +204,27 @@ pIdentifier = tokNoErr (\case
         Tok.Identifier n -> Just n
         _ -> Nothing
     )
+
+-- DESTRUCTURED
+
+pDestructured :: Parser DestructuredPos
+pDestructured = choice 
+  [ addPositions IntDes <$> pInt
+  , addPositions NumberDes <$> pDouble
+  , addPositions StringDes <$> pString
+  , pVarDes
+  ] 
+
+pVarDes :: Parser DestructuredPos
+pVarDes = do 
+    name <- pIdentifier
+    args <- many pDestructured
+    end <- Parsec.getSourcePos 
+    return 
+        $ VarDes
+            (Positions (Tok.startPos name) end)
+            (tokenVal name)
+            args
 
 -- LITERALS 
 

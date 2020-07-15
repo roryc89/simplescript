@@ -35,12 +35,18 @@ flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
 
 flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
 flattenLine Line{..} = 
-  if (tokenVal <$> headMay line) /= Just (Keyword Let) 
+  
+  if tok1 /= Just (Keyword Let)
     && getIndentAt 0 indented == getIndentAt 1 indented 
     then 
     line <> foldMap flattenLine indented
   else 
     line <> flattenLines indented
+
+  where 
+    tok1 = tokenVal <$> headMay line
+
+    
 
 getIndentAt :: Int -> [TokenAndPosLine] -> Maybe Pos
 getIndentAt idx line = getIndent =<< atMay line idx 

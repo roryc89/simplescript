@@ -303,7 +303,7 @@ type MyT
                 |]
                     @?= Right 
                         [ TypeDeclaration () "MyT" [] [Ctr () "A" [], Ctr () "B" []] ]
-        ,  
+        ,
             let 
                 result  = 
                     Right 
@@ -344,8 +344,7 @@ val =
         , testGroup "case expressions and destructuring" 
             [  testCase "single branch" $
                     parseTextWoPos [text|
-val = case a of 
-    b => c
+val = case a of { b => c }
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
@@ -353,11 +352,12 @@ val = case a of
                                 [ (VarDes () "b" [], Var () "c")
                                 ]
                             ]
-            ,  testCase "two branches with int destructuring" $
+            , testCase "two branches with int destructuring" $
                     parseTextWoPos [text|
 val = case a of 
-    0 => c
-    1 => d
+    { 0 => c
+    , 1 => d
+    }
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
@@ -366,13 +366,14 @@ val = case a of
                                 , (IntDes () 1, Var () "d")
                                 ]
                             ]
-            ,  testCase "record destructuring" $
+            , testCase "record destructuring" $
                     parseTextWoPos [text|
 val = case a of 
-    { b = 1
-    , c = "c"
-    , x
-    } => d
+    {   { b = 1
+        , c = "c"
+        , x
+        } => d
+    }
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
@@ -387,10 +388,10 @@ val = case a of
 
                                 ]
                             ]
-            ,  testCase "list destructuring" $
+            , testCase "list destructuring" $
                     parseTextWoPos [text|
 val = case a of 
-    [1.0, 10.0] => c
+    { [1.0, 10.0] => c}
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
@@ -398,15 +399,37 @@ val = case a of
                                 [ (ListDes () [NumberDes () 1.0, NumberDes () 10.0], Var () "c")
                                 ]
                             ]
-            ,  testCase "constructor and string destructuring" $
+            , testCase "constructor and string destructuring" $
                     parseTextWoPos [text|
 val = case a of 
-    Just "a" => c
+    { Just "a" => c
+    }
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
                                 $ Case () (Var () "a")
                                 [ (VarDes () "Just" [StringDes () "a"], Var () "c")
+                                ]
+                            ]
+            , testCase "multiple case expressions" $
+                    parseTextWoPos [text|
+val = case a of 
+    {b => c}
+
+val = case a of 
+    { 0 => c
+    , 1 => d
+    }
+                |]
+                        @?= Right 
+                            [ VarDeclaration  () "val"
+                                $ Case () (Var () "a")
+                                [ (VarDes () "b" [], Var () "c")
+                                ]
+                            , VarDeclaration  () "val"
+                                $ Case () (Var () "a")
+                                [ (IntDes () 0, Var () "c")
+                                , (IntDes () 1, Var () "d")
                                 ]
                             ]
             ]
