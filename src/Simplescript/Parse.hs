@@ -148,6 +148,7 @@ pLiteral = choice
     , pIntLit
     , pStringLit
     , pListLit
+    , pRecordLit
     ]
 
 pStringLit :: Parser LiteralPos
@@ -183,6 +184,21 @@ pListLit = do
     items <- Parsec.sepBy pExpr (tokEq Tok.Comma)
     close <- tokEq Tok.RSquareBracket
     return $ ListLit (posBetween open close) items
+
+pRecordLit :: Parser LiteralPos
+pRecordLit = do 
+    open <- tokEq Tok.LBrace
+    items <- Parsec.sepBy (pRecordKeyVal pExpr) (tokEq Tok.Comma)
+    close <- tokEq Tok.RBrace
+    return $ RecordLit (posBetween open close) items
+
+
+pRecordKeyVal :: Parser a -> Parser (T.Text, a)
+pRecordKeyVal p = do 
+    key <- pIdentifier
+    void $ tokEq Tok.Assign
+    val <- p
+    return (tokenVal key, val)
 
 -- LEXEME 
 
