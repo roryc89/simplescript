@@ -115,6 +115,18 @@ tests = testGroup "Parse"
                             "val"
                             (Op () "+" (Var () "a") (Var () "b"))
                         ]
+        ,  testCase "type declaration with no constructors" $
+                parseTextWoPos "type MyT =" 
+                    @?= Right 
+                        [ TypeDeclaration () "MyT" [] []
+                        ]
+
+        ,  testCase "type declaration with 2 constructors" $
+                parseTextWoPos "type MyT = A | B" 
+                    @?= Right 
+                        [ TypeDeclaration () "MyT" [] [Ctr () "A" [], Ctr () "B" []]
+                        ]
+
 
         ,  testCase "type operator application" $
                 parseTextWoPos "val : a + b" 

@@ -19,6 +19,7 @@ type StatementPos = Statement Positions
 
 data Statement a
     = TypeAnnotation a Text (Type a)
+    | TypeDeclaration a Text [(Text, a)] [Ctr a]
     | VarDeclaration a Text (Expr a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
@@ -49,7 +50,14 @@ data Literal a
     | StringLit a Text 
     | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
-    | FunctionLit a [(Text, a)] (Expr a) 
+    | FunctionLit a [(Text, a)] (Expr a)
+    | IfLit a (Expr a) (Expr a) (Expr a)
+    | CaseLit a (Expr a) (Expr a) (Expr a)
+    deriving (Show, Eq, Ord, Functor, Foldable)
+
+type CtrPos = Ctr Positions
+
+data Ctr a = Ctr a Text [Type a]
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 data Positions = Positions 

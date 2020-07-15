@@ -49,14 +49,25 @@ sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel ""
 pStatementsTopLevel :: Parser [StatementPos]
 pStatementsTopLevel = Parsec.manyTill (lexemeNewAndIndent pStatement) Parsec.eof
 
-pNewline :: Parser (WithPos SToken)
-pNewline = tokEq Tok.Newline 
-
 pStatement :: Parser StatementPos
 pStatement = choice
-    [ Parsec.try pTypeAnnotation 
+    [ pTypeDeclaration
+    , Parsec.try pTypeAnnotation
     , pVarDeclaration
     ]
+
+pTypeDeclaration :: Parser StatementPos
+pTypeDeclaration = do 
+    keyword <- tokEq (Tok.Keyword Tok.Type)
+    name <- pIdentifier
+    args <- many pArg
+    assign <- tokEq Tok.Assign 
+    TypeDeclaration 
+        (Positions (Tok.startPos name) (Tok.endPos assign))
+        (tokenVal name)
+        args
+        <$> Parsec.sepBy pCtr (tokEq Tok.Pipe)
+
 
 pTypeAnnotation :: Parser StatementPos
 pTypeAnnotation = do 
@@ -77,7 +88,16 @@ pVarDeclaration = do
         (tokenVal name)
         <$> pExpr
 
+-- TYPE CONSTRUCTORS 
+
+pCtr :: Parser CtrPos
+pCtr = do 
+    name <- pIdentifier
+    Ctr (btwWithPos name name) (tokenVal name) <$> many pType
+
+
 -- TYPES 
+
 pType :: Parser TypePos
 pType = makeExprParser pTypeTerms typeOperatorTable
 

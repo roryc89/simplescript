@@ -66,6 +66,7 @@ pSToken = lexeme $ withPos $ choice
     , Backslash <$ char '\\'
     , Colon <$ char ':'
     , Comma <$ char ','
+    , Pipe <$ char '|'
     , LParen <$ char '('
     , RParen <$ char ')'
     , LBrace <$ char '{'
@@ -81,7 +82,8 @@ pSToken = lexeme $ withPos $ choice
 
 pKeyword :: Parser Keyword
 pKeyword = choice 
-    [ Let <$ string "let" 
+    [ Type <$ string "type" 
+    , Let <$ string "let" 
     , In <$ string "in" 
     , Case <$ string "case" 
     , Of <$ string "of" 

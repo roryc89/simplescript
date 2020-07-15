@@ -75,6 +75,7 @@ data SToken
     | Arrow
     | Colon
     | Comma
+    | Pipe
     | LParen 
     | RParen
     | LBrace
@@ -82,11 +83,11 @@ data SToken
     | LSquareBracket
     | RSquareBracket
     | Newline
-    | IndentedNewline
     deriving (Eq, Ord, Show)
 
 data Keyword 
-    = Let 
+    = Type
+    | Let 
     | In 
     | Case 
     | Of 
@@ -123,14 +124,14 @@ showSToken = \case
     Backslash -> "\\"
     Colon -> ":"
     Comma -> ","
+    Pipe -> "|"
     LParen -> "("
     RParen -> ")"
     LBrace -> "{"
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
-    Newline -> "\nNewline"
-    IndentedNewline -> "\nIndentedNewline"
+    Newline -> "\n"
 
 data WithPos a = WithPos
   { startPos :: SourcePos
