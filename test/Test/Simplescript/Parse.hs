@@ -344,7 +344,8 @@ val =
         , testGroup "case expressions and destructuring" 
             [  testCase "single branch" $
                     parseTextWoPos [text|
-val = case a of { b => c }
+val = case a of 
+    { b => c }
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
@@ -366,6 +367,7 @@ val = case a of
                                 , (IntDes () 1, Var () "d")
                                 ]
                             ]
+
             , testCase "record destructuring" $
                     parseTextWoPos [text|
 val = case a of 

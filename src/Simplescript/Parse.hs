@@ -167,18 +167,16 @@ pIf = do
 
 pCase :: Parser ExprPos
 pCase = do
-    caseK <- dbg "caseK" $ tokEq (Tok.Keyword Tok.Case)
-    case_ <- dbg "case_" $ pExpr
+    caseK <- tokEq (Tok.Keyword Tok.Case)
+    case_ <- pExpr
     tokEq $ Tok.Keyword Tok.Of
-    openBr <- dbg "openBr" $ tokEq Tok.LBrace
+    openBr <- tokEq Tok.LBrace
 
-    branches <- dbg "branches" $  
-        -- Parsec.sepBy pBranch (tokEq Tok.Comma)
-        Parsec.sepBy (lexemeNewAndIndent pBranch) (tokEq Tok.Comma)
+    branches <- Parsec.sepBy pBranch (tokEq Tok.Comma)
 
-    closeBr <- dbg "closeBr" $ tokEq Tok.RBrace
+    closeBr <- tokEq Tok.RBrace
 
-    end <- dbg "end" $ Parsec.getSourcePos 
+    end <- Parsec.getSourcePos 
     return 
         $ Case
             (Positions (Tok.startPos caseK) end)
@@ -213,6 +211,8 @@ pDestructured = choice
   , addPositions NumberDes <$> pDouble
   , addPositions StringDes <$> pString
   , pVarDes
+  , pListDes 
+  , pRecordDes 
   ] 
 
 pVarDes :: Parser DestructuredPos
@@ -225,6 +225,28 @@ pVarDes = do
             (Positions (Tok.startPos name) end)
             (tokenVal name)
             args
+
+pListDes :: Parser DestructuredPos
+pListDes =  do 
+    open <- tokEq Tok.LSquareBracket
+    items <- Parsec.sepBy pDestructured (tokEq Tok.Comma)
+    close <- tokEq Tok.RSquareBracket
+    return $ ListDes (btwWithPos open close) items
+
+pRecordDes :: Parser DestructuredPos
+pRecordDes =  do 
+    open <- tokEq Tok.LBrace
+    items <- Parsec.sepBy pRecordRowDes (tokEq Tok.Comma)
+    close <- tokEq Tok.RBrace
+    return $ RecordDes (btwWithPos open close) items
+
+pRecordRowDes :: Parser (Text, Positions, Maybe DestructuredPos)
+pRecordRowDes = do 
+    key <- pIdentifier
+    val <- Parsec.optional $ do 
+        tokEq Tok.Assign
+        pDestructured
+    return (tokenVal key, Positions (Tok.startPos key) (Tok.startPos key), val)
 
 -- LITERALS 
 
