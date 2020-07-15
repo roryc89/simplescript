@@ -49,7 +49,7 @@ data Literal a
     | StringLit a Text 
     | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
-    | FunctionLit a [Text] (Expr a) 
+    | FunctionLit a [(Text, a)] (Expr a) 
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 data Positions = Positions 

@@ -149,6 +149,7 @@ pLiteral = choice
     , pStringLit
     , pListLit
     , pRecordLit
+    , pFunctionLit
     ]
 
 pStringLit :: Parser LiteralPos
@@ -183,15 +184,14 @@ pListLit = do
     open <- tokEq Tok.LSquareBracket
     items <- Parsec.sepBy pExpr (tokEq Tok.Comma)
     close <- tokEq Tok.RSquareBracket
-    return $ ListLit (posBetween open close) items
+    return $ ListLit (btwWithPos open close) items
 
 pRecordLit :: Parser LiteralPos
 pRecordLit = do 
     open <- tokEq Tok.LBrace
     items <- Parsec.sepBy (pRecordKeyVal pExpr) (tokEq Tok.Comma)
     close <- tokEq Tok.RBrace
-    return $ RecordLit (posBetween open close) items
-
+    return $ RecordLit (btwWithPos open close) items
 
 pRecordKeyVal :: Parser a -> Parser (T.Text, a)
 pRecordKeyVal p = do 
@@ -199,6 +199,21 @@ pRecordKeyVal p = do
     void $ tokEq Tok.Assign
     val <- p
     return (tokenVal key, val)
+
+pFunctionLit :: Parser LiteralPos
+pFunctionLit = do 
+    slash <- tokEq Tok.Backslash 
+    args <- Parsec.sepBy pArg (tokEq Tok.Comma)
+    arrow <- tokEq Tok.Arrow
+    expr <- pExpr
+    end <- Parsec.getSourcePos 
+    return $ FunctionLit (Positions (Tok.startPos slash) end) args expr
+
+pArg :: Parser (Text, Positions)
+pArg = go <$> pIdentifier
+    where 
+        go WithPos{..} = (tokenVal, Positions startPos endPos)
+    
 
 -- LEXEME 
 
@@ -218,8 +233,8 @@ lexemeNewAndIndent = Lexer.lexeme newAndIndents
 addPositions :: (Positions -> a -> b) -> WithPos a -> b
 addPositions c WithPos{..} = c (Positions{..}) tokenVal
 
-posBetween :: WithPos a -> WithPos a1 -> Positions
-posBetween l r = Positions (Tok.startPos l) (Tok.endPos r)
+btwWithPos :: WithPos a -> WithPos a1 -> Positions
+btwWithPos l r = Positions (Tok.startPos l) (Tok.endPos r)
  
 
 tokEq :: SToken -> Parser (WithPos SToken)

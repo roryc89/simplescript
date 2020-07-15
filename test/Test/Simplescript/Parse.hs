@@ -59,7 +59,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "const"
-                            (Lit $ FunctionLit () ["a", "b"] (Var () "b"))
+                            (Lit $ FunctionLit () [("a", ()), ("b", ())] (Var () "b"))
                         ]
 
         ,  testCase "list literal" $
