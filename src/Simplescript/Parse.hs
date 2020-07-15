@@ -121,6 +121,7 @@ pTerms = choice
     , pVar
     , pParens
     , pLet
+    , pIf
     ]
 
 pVar :: Parser ExprPos
@@ -147,6 +148,21 @@ pLet = do
 
     Let (Positions (Tok.startPos let_) (Tok.endPos let_)) statements
         <$> pExpr
+
+pIf :: Parser ExprPos
+pIf = do
+    ifK <- tokEq (Tok.Keyword Tok.If)
+    if_ <- pExpr
+    thenK <- tokEq (Tok.Keyword Tok.Then)
+    then_ <- pExpr 
+    elseK <- tokEq (Tok.Keyword Tok.Else)
+    else_ <- pExpr 
+    end <- Parsec.getSourcePos 
+    return $ If 
+        (Positions (Tok.startPos ifK) end) 
+        if_
+        then_
+        else_
 
 pIn :: Parser (WithPos SToken)
 pIn =  tokEq (Tok.Keyword Tok.In)
