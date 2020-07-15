@@ -214,6 +214,7 @@ new =
                             "new"
                             (Lit $ IntLit (Positions (sp 4 5)  (sp 4 8)) 123 )
                         ]
+
         ,  testCase "mixed types values indented" $
                 parseText [text|
 val : 
@@ -231,6 +232,66 @@ val =
                             "val"
                             (Lit $ IntLit (Positions (sp 4 5)  (sp 4 8)) 123 )
                         ]
+        ,  testCase "list literal vertically aligned" $
+                parseTextWoPos [text|
+rec = 
+    [ a
+    , 2
+    ]
+                |]
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "l"
+                            (Lit $ ListLit ()
+                                [ Var () "a"
+                                , Lit $ IntLit () 2
+                                ]
+                            )
+                        ]
+
+
+        ,  testCase "record literal vertically aligned" $
+                parseTextWoPos [text|
+rec = 
+    { a = 1
+    , b = x
+    }
+                |]
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "rec"
+                            (Lit $ RecordLit () 
+                                [ ("a" , Lit $ IntLit () 1)
+                                , ("b" , Var () "x")
+                                ]
+                            )
+                        ]
+
+
+        ,  testCase "function application vertically aligned" $
+                parseTextWoPos [text|
+rec = 
+    a 
+    b
+                |]
+
+                    @?= Right 
+                        [ VarDeclaration 
+                            ()
+                            "applied"
+                            (Apply (Var () "a") (Var () "b"))
+                        ]
+
+        ,  testCase "type constructors vertically aligned" $
+                parseTextWoPos [text|
+type MyT 
+    = A 
+    | B
+                |]
+                    @?= Right 
+                        [ TypeDeclaration () "MyT" [] [Ctr () "A" [], Ctr () "B" []] ]
         ,  
             let 
                 result  = 
