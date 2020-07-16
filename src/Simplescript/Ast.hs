@@ -29,6 +29,8 @@ data Type a
     = TypeIdentifier a Text
     | TypeApply (Type a) (Type a)
     | TypeOp a Text (Type a) (Type a)
+    | TypeParens a (Type a)
+    | TypeRecord a [(Text, Type a)]
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type ExprPos = Expr Positions

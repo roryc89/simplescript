@@ -311,12 +311,16 @@ applied
 
         ,  testCase "type constructors vertically aligned" $
                 parseTextWoPos [text|
-type MyT 
-    = A 
-    | B
+type MyT t 
+    = A
+    | B c
                 |]
                     @?= Right 
-                        [ TypeDeclaration () "MyT" [] [Ctr () "A" [], Ctr () "B" []] ]
+                        [ TypeDeclaration () "MyT" [("t", ())] 
+                            [ Ctr () "A" []
+                            , Ctr () "B" [TypeIdentifier () "c"]
+                            ]
+                        ]
         ,
             let 
                 result  = 
