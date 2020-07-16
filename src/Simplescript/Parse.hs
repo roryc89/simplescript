@@ -90,14 +90,6 @@ pVarDeclaration = do
         <$> pExpr
 
 
--- TYPE CONSTRUCTORS 
-
-pCtr :: Parser CtrPos
-pCtr = do 
-    name <- pIdentifier
-    Ctr (btwWithPos name name) (tokenVal name) <$> many pType
-
-
 -- TYPES 
 
 pType :: Parser TypePos
@@ -106,11 +98,46 @@ pType = makeExprParser pTypeTerms typeOperatorTable
 pTypeTerms :: Parser TypePos
 pTypeTerms = choice
     [ pTypeIdentifier
+    , pTypeParens
+    , TypeLit <$> pTypeLiteral
     ]
 
 pTypeIdentifier :: Parser TypePos
 pTypeIdentifier = addPositions TypeIdentifier <$> pIdentifier
 
+pTypeParens :: Parser TypePos
+pTypeParens = 
+    pParens_ pType TypeParens
+
+-- TYPE LITERALS
+
+pTypeLiteral :: Parser TypeLiteralPos
+pTypeLiteral = choice 
+    [ pRecordTypeLit
+    , addPositions StringTypeLit <$> pString
+    -- , pListRecordLit
+    ]
+
+pRecordTypeLit :: Parser TypeLiteralPos
+pRecordTypeLit = do 
+    open <- tokEq Tok.LBrace
+    items <- Parsec.sepBy (pTypeRecordKeyVal pType) (tokEq Tok.Comma)
+    close <- tokEq Tok.RBrace
+    return $ RecordTypeLit (btwWithPos open close) items
+
+pTypeRecordKeyVal :: Parser a -> Parser (T.Text, a)
+pTypeRecordKeyVal p = do 
+    key <- pIdentifier
+    void $ tokEq Tok.Colon
+    val <- p
+    return (tokenVal key, val)
+
+-- TYPE CONSTRUCTORS 
+
+pCtr :: Parser CtrPos
+pCtr = do 
+    name <- pIdentifier
+    Ctr (btwWithPos name name) (tokenVal name) <$> many pType
 
 -- EXPRESSIONS
 
@@ -131,22 +158,21 @@ pVar :: Parser ExprPos
 pVar = addType $ addPositions Var <$> pIdentifier 
 
 pParens :: Parser ExprPos
-pParens = addType $ do 
+pParens = 
+    addType $ pParens_ pExpr Parens
+    
+pParens_ :: 
+    Parser t
+    -> (Positions -> t -> a)
+    -> Parser a
+pParens_ p c =  do 
     open <- tokEq Tok.LParen
-    inside <- pExpr 
+    inside <- p 
     close <- tokEq Tok.RParen 
     return $
-        Parens 
-            (Positions (Tok.startPos open) (Tok.startPos close))
-            inside
-
-
--- addType :: Parser (Maybe TypePos -> a) -> Parser a
--- addType p = do 
---     cons <- p
---     t <- Parsec.optional $ tokEq Tok.Colon *> pType 
---     return $ cons t
-
+        c 
+        (Positions (Tok.startPos open) (Tok.startPos close))
+        inside
 
 pLet :: Parser ExprPos
 pLet = do 
@@ -350,10 +376,6 @@ lexemeNewAndIndent = Lexer.lexeme newAndIndents
 
 
 -- UTILS 
-
--- addPositionsAndType :: (Positions -> tok -> Maybe (Type Positions) -> d Positions)
---          -> WithPos tok -> d Positions
--- addPositionsAndType tok p = 
 
 addPositions :: (Positions -> t -> t1) -> WithPos t -> t1
 addPositions c WithPos{..} = c (Positions{..}) tokenVal

@@ -309,7 +309,7 @@ applied
                             (Apply (Var () "a" Nothing) (Var () "b" Nothing) )
                         ]
 
-        ,  testCase "type constructors vertically aligned" $
+        ,  testCase "type declarations vertically aligned" $
                 parseTextWoPos [text|
 type MyT t 
     = A
@@ -321,9 +321,46 @@ type MyT t
                             , Ctr () "B" [TypeIdentifier () "c"]
                             ]
                         ]
+
+        ,  testCase "type declarations with parenthesis types vertically aligned" $
+                parseTextWoPos [text|
+type MyT t 
+    = A
+    | B (C D)
+                |]
+                    @?= Right 
+                        [ TypeDeclaration () "MyT" [("t", ())] 
+                            [ Ctr () "A" []
+                            , Ctr () "B" [TypeParens () (TypeApply (TypeIdentifier () "C") (TypeIdentifier () "D"))]
+                            ]
+                        ]
+
+        ,  testCase "mutliple type declarations with record and string types vertically aligned" $
+                parseTextWoPos [text|
+type MyT t 
+    = A "str"
+    | B c
+
+type MyOtherT t 
+    = A
+    | B {a : Int}
+                |]
+                    @?= Right 
+                        [ TypeDeclaration () "MyT" [("t", ())] 
+                            [ Ctr () "A" [TypeLit $ StringTypeLit () "str"]
+                            , Ctr () "B" [TypeIdentifier () "c"]
+                            ]
+                        , TypeDeclaration () "MyOtherT" [("t", ())] 
+                            [ Ctr () "A" []
+                            , Ctr () "B" 
+                                [TypeLit $ RecordTypeLit () 
+                                    [( "a", TypeIdentifier () "Int") ]
+                                    ]
+                            ]
+                        ]
         ,
             let 
-                result  = 
+                result = 
                     Right 
                         [ VarDeclaration 
                             ()
@@ -334,7 +371,7 @@ type MyT t
                                 , VarDeclaration () "a" (Lit (IntLit () 1) Nothing)
                                 , VarDeclaration () "b" (Lit (StringLit () "string") Nothing)
                                 ]
-                                ( Var () "c" Nothing)
+                                ( Var () "c" Nothing )
                             )
                         ]
             in

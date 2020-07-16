@@ -30,7 +30,15 @@ data Type a
     | TypeApply (Type a) (Type a)
     | TypeOp a Text (Type a) (Type a)
     | TypeParens a (Type a)
-    | TypeRecord a [(Text, Type a)]
+    | TypeLit (TypeLiteral a)
+    deriving (Show, Eq, Ord, Functor, Foldable)
+
+type TypeLiteralPos = TypeLiteral Positions
+
+data TypeLiteral a
+    = StringTypeLit a Text 
+    | ListTypeLit a [Type a]
+    | RecordTypeLit a [(Text, Type a)]
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type ExprPos = Expr Positions
