@@ -126,12 +126,12 @@ tests = testGroup "Parse"
                         ]
 
         ,  testCase "operator application" $
-                parseTextWoPos "val = a + b" 
+                parseTextWoPos "val = a + b : Int" 
                     @?= Right 
                         [ VarDeclaration 
                             ()
                             "val"
-                            (Op () "+" (Var () "a" Nothing) (Var () "b" Nothing))
+                            (Op () "+" (Var () "a" Nothing) (Var () "b" (Just $ TypeIdentifier () "Int")))
                         ]
         ,  testCase "type declaration with no constructors" $
                 parseTextWoPos "type MyT =" 
@@ -253,7 +253,7 @@ val =
         ,  testCase "list literal vertically aligned" $
                 parseTextWoPos [text|
 l = 
-    [ a
+    [ a : T
     , 2
     ]
                 |]
@@ -263,7 +263,7 @@ l =
                             "l"
                             (Lit 
                                 ( ListLit ()
-                                    [ Var () "a" Nothing
+                                    [ Var () "a" (Just $ TypeIdentifier () "T")
                                     , Lit (IntLit () 2) Nothing
                                     ]
                                 )
@@ -371,17 +371,17 @@ val = case a of
             , testCase "two branches with int destructuring" $
                     parseTextWoPos [text|
 val = case a of 
-    { 0 => c
-    , 1 => d
-    }
+    { 0 => c : X
+    , 1 => d : X
+    } : X
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
                                 $ Case () (Var () "a" Nothing)
-                                [ (IntDes () 0 Nothing, Var () "c" Nothing)
-                                , (IntDes () 1 Nothing, Var () "d" Nothing)
+                                [ (IntDes () 0 Nothing, Var () "c" (Just $ TypeIdentifier () "X"))
+                                , (IntDes () 1 Nothing, Var () "d" (Just $ TypeIdentifier () "X"))
                                 ]
-                                Nothing
+                                (Just $ TypeIdentifier () "X")
                             ]
 
             , testCase "record destructuring" $
