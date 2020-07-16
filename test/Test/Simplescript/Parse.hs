@@ -335,15 +335,18 @@ type MyT t
                             ]
                         ]
 
-        ,  testCase "mutliple type declarations with record and string types vertically aligned" $
+        ,  testCase "mutliple type declarations with record, list and string types vertically aligned" $
                 parseTextWoPos [text|
 type MyT t 
     = A "str"
     | B c
 
 type MyOtherT t 
-    = A
-    | B {a : Int}
+    = A [ el1, el2 ]
+    | B 
+        { a : Int
+        , b : String
+        }
                 |]
                     @?= Right 
                         [ TypeDeclaration () "MyT" [("t", ())] 
@@ -351,11 +354,18 @@ type MyOtherT t
                             , Ctr () "B" [TypeIdentifier () "c"]
                             ]
                         , TypeDeclaration () "MyOtherT" [("t", ())] 
-                            [ Ctr () "A" []
+                            [ Ctr () "A" 
+                                [TypeLit $ ListTypeLit  () 
+                                    [ TypeIdentifier () "el1"
+                                    , TypeIdentifier () "el2" 
+                                    ]
+                                ]
                             , Ctr () "B" 
                                 [TypeLit $ RecordTypeLit () 
-                                    [( "a", TypeIdentifier () "Int") ]
+                                    [ ( "a", TypeIdentifier () "Int") 
+                                    , ( "b", TypeIdentifier () "String") 
                                     ]
+                                ]
                             ]
                         ]
         ,

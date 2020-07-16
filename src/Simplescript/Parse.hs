@@ -115,7 +115,7 @@ pTypeLiteral :: Parser TypeLiteralPos
 pTypeLiteral = choice 
     [ pRecordTypeLit
     , addPositions StringTypeLit <$> pString
-    -- , pListRecordLit
+    , pListRecordLit
     ]
 
 pRecordTypeLit :: Parser TypeLiteralPos
@@ -131,6 +131,13 @@ pTypeRecordKeyVal p = do
     void $ tokEq Tok.Colon
     val <- p
     return (tokenVal key, val)
+
+pListRecordLit :: Parser TypeLiteralPos
+pListRecordLit = do 
+    open <- tokEq Tok.LSquareBracket
+    items <- Parsec.sepBy pType (tokEq Tok.Comma)
+    close <- tokEq Tok.RSquareBracket
+    return $ ListTypeLit (btwWithPos open close) items
 
 -- TYPE CONSTRUCTORS 
 
