@@ -22,7 +22,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ IntLit (Positions (sp 1 7)  (sp 1 9)) 22 )
+                            (Lit (IntLit (Positions (sp 1 7)  (sp 1 9)) 22 ) Nothing)
 
                         ]
         ,  testCase "string value" $
@@ -31,7 +31,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ StringLit (Positions (sp 1 7)  (sp 1 10)) "a" )
+                            (Lit (StringLit (Positions (sp 1 7)  (sp 1 10)) "a" ) Nothing)
                         ]
         ,  testCase "number and parens value" $
                 parseText "val = (10.0)" 
@@ -41,7 +41,9 @@ tests = testGroup "Parse"
                             "val"
                             ( Parens 
                                 (Positions (sp 1 7)  (sp 1 12)) 
-                                (Lit $ NumberLit (Positions (sp 1 8)  (sp 1 12)) 10.0 ))
+                                (Lit (NumberLit (Positions (sp 1 8)  (sp 1 12)) 10.0 ) Nothing)
+                                Nothing
+                            )
                         ]
         ,  testCase "type annotation" $
                 parseText "val : Int" 
@@ -59,7 +61,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "const"
-                            (Lit $ FunctionLit () [("a", ()), ("b", ())] (Var () "b"))
+                            (Lit (FunctionLit () [VarDes () "a" [] Nothing, VarDes () "b" [] Nothing] (Var () "b" Nothing)) Nothing)
                         ]
 
         ,  testCase "list literal" $
@@ -68,10 +70,13 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "l"
-                            (Lit $ ListLit ()
-                                [ Var () "a"
-                                , Lit $ IntLit () 2
-                                ]
+                            (Lit 
+                                ( ListLit ()
+                                    [ Var () "a" Nothing
+                                    , Lit (IntLit () 2) Nothing
+                                    ]
+                                )
+                                Nothing
                             )
                         ]
 
@@ -81,10 +86,13 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "rec"
-                            (Lit $ RecordLit () 
-                                [ ("a" , Lit $ IntLit () 1)
-                                , ("b" , Var () "x")
-                                ]
+                            (Lit 
+                                ( RecordLit () 
+                                    [ ("a" , Lit (IntLit () 1) Nothing)
+                                    , ("b" , Var () "x" Nothing)
+                                    ]
+                                )
+                                Nothing
                             )
                         ]
 
@@ -94,7 +102,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "x"
-                            (If () (Var () "a") (Var () "b") (Var () "c")
+                            (If () (Var () "a" Nothing) (Var () "b" Nothing) (Var () "c" Nothing)
                             )
                         ]
 
@@ -105,7 +113,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "applied"
-                            (Apply (Var () "a") (Var () "b"))
+                            (Apply (Var () "a" Nothing) (Var () "b" Nothing))
                         ]
 
         ,  testCase "type application" $
@@ -123,7 +131,7 @@ tests = testGroup "Parse"
                         [ VarDeclaration 
                             ()
                             "val"
-                            (Op () "+" (Var () "a") (Var () "b"))
+                            (Op () "+" (Var () "a" Nothing) (Var () "b" Nothing))
                         ]
         ,  testCase "type declaration with no constructors" $
                 parseTextWoPos "type MyT =" 
@@ -155,8 +163,8 @@ tests = testGroup "Parse"
                             "val"
                             ( Let 
                                 () 
-                                [ VarDeclaration () "a" (Lit $ IntLit () 1)]
-                                ( Var () "b")
+                                [ VarDeclaration () "a" (Lit (IntLit () 1) Nothing) ]
+                                ( Var () "b" Nothing)
                             )
                         ]
             in
@@ -191,11 +199,11 @@ val = let a = 1 in b
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ IntLit (Positions (sp 1 7)  (sp 1 9)) 22 )
+                            (Lit (IntLit (Positions (sp 1 7)  (sp 1 9)) 22 ) Nothing)
                         , VarDeclaration 
                             (Positions (sp 2 1)  (sp 2 7))
                             "val2"
-                            (Lit $ IntLit (Positions (sp 2 8)  (sp 2 10)) 42)
+                            (Lit (IntLit (Positions (sp 2 8)  (sp 2 10)) 42) Nothing)
 
                         ]
         ,  testCase "string value indented" $
@@ -204,7 +212,7 @@ val = let a = 1 in b
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ StringLit (Positions (sp 2 5)  (sp 2 8)) "a" )
+                            (Lit  (StringLit (Positions (sp 2 5)  (sp 2 8)) "a" ) Nothing)
                         ]
 
         ,  testCase "multiple values indented" $
@@ -218,11 +226,11 @@ new =
                         [ VarDeclaration 
                             (Positions (sp 1 1)  (sp 1 6))
                             "val"
-                            (Lit $ StringLit (Positions (sp 2 5)  (sp 2 8)) "a" )
+                            (Lit  (StringLit (Positions (sp 2 5)  (sp 2 8)) "a" ) Nothing)
                         , VarDeclaration 
                             (Positions (sp 3 1)  (sp 3 6))
                             "new"
-                            (Lit $ IntLit (Positions (sp 4 5)  (sp 4 8)) 123 )
+                            (Lit (IntLit (Positions (sp 4 5)  (sp 4 8)) 123 ) Nothing)
                         ]
 
         ,  testCase "mixed types values indented" $
@@ -240,7 +248,7 @@ val =
                         , VarDeclaration 
                             (Positions (sp 3 1)  (sp 3 6))
                             "val"
-                            (Lit $ IntLit (Positions (sp 4 5)  (sp 4 8)) 123 )
+                            (Lit (IntLit (Positions (sp 4 5)  (sp 4 8)) 123 ) Nothing)
                         ]
         ,  testCase "list literal vertically aligned" $
                 parseTextWoPos [text|
@@ -253,10 +261,13 @@ l =
                         [ VarDeclaration 
                             ()
                             "l"
-                            (Lit $ ListLit ()
-                                [ Var () "a"
-                                , Lit $ IntLit () 2
-                                ]
+                            (Lit 
+                                ( ListLit ()
+                                    [ Var () "a" Nothing
+                                    , Lit (IntLit () 2) Nothing
+                                    ]
+                                )
+                                Nothing
                             )
                         ]
 
@@ -272,10 +283,13 @@ rec =
                         [ VarDeclaration 
                             ()
                             "rec"
-                            (Lit $ RecordLit () 
-                                [ ("a" , Lit $ IntLit () 1)
-                                , ("b" , Var () "x")
-                                ]
+                            (Lit 
+                                ( RecordLit () 
+                                  [ ("a" , Lit (IntLit () 1) Nothing)
+                                  , ("b" , Var () "x" Nothing)
+                                  ]
+                                )
+                                Nothing
                             )
                         ]
 
@@ -292,7 +306,7 @@ applied
                         [ VarDeclaration 
                             ()
                             "applied"
-                            (Apply (Var () "a") (Var () "b"))
+                            (Apply (Var () "a" Nothing) (Var () "b" Nothing) )
                         ]
 
         ,  testCase "type constructors vertically aligned" $
@@ -313,10 +327,10 @@ type MyT
                             ( Let 
                                 () 
                                 [ TypeAnnotation () "a" (TypeIdentifier () "Int")
-                                , VarDeclaration () "a" (Lit $ IntLit () 1)
-                                , VarDeclaration () "b" (Lit $ StringLit () "string")
+                                , VarDeclaration () "a" (Lit (IntLit () 1) Nothing)
+                                , VarDeclaration () "b" (Lit (StringLit () "string") Nothing)
                                 ]
-                                ( Var () "c")
+                                ( Var () "c" Nothing)
                             )
                         ]
             in
@@ -349,9 +363,10 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (VarDes () "b" [], Var () "c")
+                                $ Case () (Var () "a" Nothing)
+                                [ (VarDes () "b" [] Nothing, Var () "c" Nothing)
                                 ]
+                                Nothing
                             ]
             , testCase "two branches with int destructuring" $
                     parseTextWoPos [text|
@@ -362,10 +377,11 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (IntDes () 0, Var () "c")
-                                , (IntDes () 1, Var () "d")
+                                $ Case () (Var () "a" Nothing)
+                                [ (IntDes () 0 Nothing, Var () "c" Nothing)
+                                , (IntDes () 1 Nothing, Var () "d" Nothing)
                                 ]
+                                Nothing
                             ]
 
             , testCase "record destructuring" $
@@ -379,16 +395,17 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
+                                $ Case () (Var () "a" Nothing)
                                 [  ( RecordDes () 
-                                        [ ("b", () , Just $ IntDes () 1)
-                                        , ("c", () , Just $ StringDes () "c")
+                                        [ ("b", () , Just $ IntDes () 1 Nothing)
+                                        , ("c", () , Just $ StringDes () "c" Nothing)
                                         , ("x", () , Nothing)
                                         ]
-                                    , Var () "d"
+                                        Nothing
+                                    , Var () "d" Nothing
                                     )
-
                                 ]
+                                Nothing
                             ]
             , testCase "list destructuring" $
                     parseTextWoPos [text|
@@ -397,9 +414,10 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (ListDes () [NumberDes () 1.0, NumberDes () 10.0], Var () "c")
+                                $ Case () (Var () "a" Nothing)
+                                [ (ListDes () [NumberDes () 1.0 Nothing, NumberDes () 10.0 Nothing] Nothing, Var () "c" Nothing)
                                 ]
+                                Nothing
                             ]
             , testCase "constructor and string destructuring" $
                     parseTextWoPos [text|
@@ -409,9 +427,10 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (VarDes () "Just" [StringDes () "a"], Var () "c")
+                                $ Case () (Var () "a" Nothing)
+                                [ (VarDes () "Just" [StringDes () "a" Nothing] Nothing, Var () "c" Nothing)
                                 ]
+                                Nothing
                             ]
             , testCase "multiple case expressions" $
                     parseTextWoPos [text|
@@ -425,14 +444,16 @@ val = case a of
                 |]
                         @?= Right 
                             [ VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (VarDes () "b" [], Var () "c")
+                                $ Case () (Var () "a" Nothing)
+                                [ (VarDes () "b" [] Nothing, Var () "c" Nothing)
                                 ]
+                                Nothing
                             , VarDeclaration  () "val"
-                                $ Case () (Var () "a")
-                                [ (IntDes () 0, Var () "c")
-                                , (IntDes () 1, Var () "d")
+                                $ Case () (Var () "a" Nothing)
+                                [ (IntDes () 0 Nothing, Var () "c" Nothing)
+                                , (IntDes () 1 Nothing, Var () "d" Nothing)
                                 ]
+                                Nothing
                             ]
             ]
         ]

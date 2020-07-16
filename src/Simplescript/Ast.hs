@@ -34,14 +34,14 @@ data Type a
 type ExprPos = Expr Positions
 
 data Expr a
-    = Var a Text
+    = Var a Text (Maybe (Type a))
     | Apply (Expr a) (Expr a)
     | Op a Text (Expr a) (Expr a)
-    | Parens a (Expr a)
+    | Parens a (Expr a) (Maybe (Type a))
     | Let a [Statement a] (Expr a)
     | If a (Expr a) (Expr a) (Expr a)
-    | Case a (Expr a) [(Destructured a, Expr a)]
-    | Lit (Literal a)
+    | Case a (Expr a) [(Destructured a, Expr a)] (Maybe (Type a))
+    | Lit (Literal a) (Maybe (Type a))
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type LiteralPos = Literal Positions
@@ -52,7 +52,7 @@ data Literal a
     | StringLit a Text 
     | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
-    | FunctionLit a [(Text, a)] (Expr a)
+    | FunctionLit a [Destructured a] (Expr a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
 type CtrPos = Ctr Positions
@@ -69,11 +69,11 @@ data Positions = Positions
 type DestructuredPos = Destructured Positions
 
 data Destructured a 
-  = VarDes a Text [Destructured a]
-  | IntDes a Int
-  | NumberDes a Double
-  | StringDes a Text
-  | ListDes a [Destructured a]
-  | RecordDes a [(Text, a, Maybe (Destructured a))]
+  = VarDes a Text [Destructured a] (Maybe (Type a))
+  | IntDes a Int (Maybe (Type a))
+  | NumberDes a Double (Maybe (Type a))
+  | StringDes a Text (Maybe (Type a))
+  | ListDes a [Destructured a] (Maybe (Type a))
+  | RecordDes a [(Text, a, Maybe (Destructured a))] (Maybe (Type a))
     deriving (Show, Eq, Ord, Functor, Foldable)
 

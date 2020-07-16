@@ -44,6 +44,7 @@ parseText input = case Lex.sLex input of
 sParseTopLevelStatements :: Tok.TokStream -> Either (Parsec.ParseErrorBundle Tok.TokStream Void) [StatementPos] 
 sParseTopLevelStatements = Parsec.runParser pStatementsTopLevel "" 
 
+
 -- STATEMENTS
 
 pStatementsTopLevel :: Parser [StatementPos]
@@ -88,6 +89,7 @@ pVarDeclaration = do
         (tokenVal name)
         <$> pExpr
 
+
 -- TYPE CONSTRUCTORS 
 
 pCtr :: Parser CtrPos
@@ -107,7 +109,7 @@ pTypeTerms = choice
     ]
 
 pTypeIdentifier :: Parser TypePos
-pTypeIdentifier = addPositions TypeIdentifier <$> pIdentifier 
+pTypeIdentifier = addPositions TypeIdentifier <$> pIdentifier
 
 
 -- EXPRESSIONS
@@ -126,10 +128,10 @@ pTerms = choice
     ]
 
 pVar :: Parser ExprPos
-pVar = addPositions Var <$> pIdentifier 
+pVar = addType $ addPositions Var <$> pIdentifier 
 
 pParens :: Parser ExprPos
-pParens = do 
+pParens = addType $ do 
     open <- tokEq Tok.LParen
     inside <- pExpr 
     close <- tokEq Tok.RParen 
@@ -137,6 +139,14 @@ pParens = do
         Parens 
             (Positions (Tok.startPos open) (Tok.startPos close))
             inside
+
+
+-- addType :: Parser (Maybe TypePos -> a) -> Parser a
+-- addType p = do 
+--     cons <- p
+--     t <- Parsec.optional $ tokEq Tok.Colon *> pType 
+--     return $ cons t
+
 
 pLet :: Parser ExprPos
 pLet = do 
@@ -166,7 +176,7 @@ pIf = do
         else_
 
 pCase :: Parser ExprPos
-pCase = do
+pCase = addType $ do
     caseK <- tokEq (Tok.Keyword Tok.Case)
     case_ <- pExpr
     tokEq $ Tok.Keyword Tok.Of
@@ -195,7 +205,7 @@ pIn :: Parser (WithPos SToken)
 pIn =  tokEq (Tok.Keyword Tok.In)
 
 pLit :: Parser ExprPos
-pLit = Lit <$> pLiteral
+pLit = addType $ Lit <$> pLiteral
 
 pIdentifier :: Parser (WithPos Text) 
 pIdentifier = tokNoErr (\case 
@@ -203,20 +213,21 @@ pIdentifier = tokNoErr (\case
         _ -> Nothing
     )
 
+
 -- DESTRUCTURED
 
 pDestructured :: Parser DestructuredPos
 pDestructured = choice 
-  [ addPositions IntDes <$> pInt
-  , addPositions NumberDes <$> pDouble
-  , addPositions StringDes <$> pString
+  [ addType $ addPositions IntDes <$> pInt
+  , addType $ addPositions NumberDes <$> pDouble
+  , addType $ addPositions StringDes <$> pString
   , pVarDes
   , pListDes 
   , pRecordDes 
   ] 
 
 pVarDes :: Parser DestructuredPos
-pVarDes = do 
+pVarDes = addType $ do 
     name <- pIdentifier
     args <- many pDestructured
     end <- Parsec.getSourcePos 
@@ -227,7 +238,7 @@ pVarDes = do
             args
 
 pListDes :: Parser DestructuredPos
-pListDes =  do 
+pListDes = addType $ do 
     open <- tokEq Tok.LSquareBracket
     items <- Parsec.sepBy pDestructured (tokEq Tok.Comma)
     close <- tokEq Tok.RSquareBracket
@@ -238,7 +249,7 @@ pRecordDes =  do
     open <- tokEq Tok.LBrace
     items <- Parsec.sepBy pRecordRowDes (tokEq Tok.Comma)
     close <- tokEq Tok.RBrace
-    return $ RecordDes (btwWithPos open close) items
+    return $ RecordDes (btwWithPos open close) items Nothing
 
 pRecordRowDes :: Parser (Text, Positions, Maybe DestructuredPos)
 pRecordRowDes = do 
@@ -247,6 +258,7 @@ pRecordRowDes = do
         tokEq Tok.Assign
         pDestructured
     return (tokenVal key, Positions (Tok.startPos key) (Tok.startPos key), val)
+
 
 -- LITERALS 
 
@@ -311,7 +323,7 @@ pRecordKeyVal p = do
 pFunctionLit :: Parser LiteralPos
 pFunctionLit = do 
     slash <- tokEq Tok.Backslash 
-    args <- Parsec.sepBy pArg (tokEq Tok.Comma)
+    args <- Parsec.sepBy pDestructured (tokEq Tok.Comma)
     arrow <- tokEq Tok.Arrow
     expr <- pExpr
     end <- Parsec.getSourcePos 
@@ -321,6 +333,7 @@ pArg :: Parser (Text, Positions)
 pArg = go <$> pIdentifier
     where 
         go WithPos{..} = (tokenVal, Positions startPos endPos)
+
 
 -- LEXEME 
 
@@ -335,10 +348,21 @@ takeNewAndIndent = Parsec.takeWhile1P Nothing (pred . tokenVal)
 lexemeNewAndIndent :: Parser a -> Parser a
 lexemeNewAndIndent = Lexer.lexeme newAndIndents
 
+
 -- UTILS 
 
-addPositions :: (Positions -> a -> b) -> WithPos a -> b
+-- addPositionsAndType :: (Positions -> tok -> Maybe (Type Positions) -> d Positions)
+--          -> WithPos tok -> d Positions
+-- addPositionsAndType tok p = 
+
+addPositions :: (Positions -> t -> t1) -> WithPos t -> t1
 addPositions c WithPos{..} = c (Positions{..}) tokenVal
+
+addType :: Parser (Maybe TypePos -> a) -> Parser a
+addType p = do 
+    cons <- p
+    t <- Parsec.optional $ tokEq Tok.Colon *> pType 
+    return $ cons t
 
 btwWithPos :: WithPos a -> WithPos a1 -> Positions
 btwWithPos l r = Positions (Tok.startPos l) (Tok.endPos r)
