@@ -5,8 +5,9 @@ import Data.Text (Text)
 data TopAssignment = TopAssignment Text Expr
 
 data Type 
-    = Regular Text
+    = Concrete Text
     | RecordType [(Text, Type)]
+    | ListType [Type]
     deriving (Show, Eq, Ord)
 
 data Expr 

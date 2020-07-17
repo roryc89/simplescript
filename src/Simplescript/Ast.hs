@@ -23,6 +23,7 @@ data Statement a
     | VarDeclaration a Text (Expr a)
     deriving (Show, Eq, Ord, Functor, Foldable)
 
+
 type TypePos = Type Positions
 
 data Type a

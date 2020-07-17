@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cb651891c160d120598e4528263456a17b4ff9f22e7baade8976bbbfc3bce941
+-- hash: ecae61bcbfa2dc00b1e0a4b1df3aca2e70e092c6614a1e49ccc2cc6ab7265123
 
 name:           ss2
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
       Simplescript.Parse.Operator
       Simplescript.Parse.TypeOperator
       Simplescript.Token
+      Simplescript.TypeCheck
       Simplescript.TypeChecked
   other-modules:
       Paths_ss2
@@ -45,10 +46,10 @@ library
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
-    , tasty-rerun
     , text
   default-language: Haskell2010
 
@@ -63,11 +64,11 @@ executable ss2-exe
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
     , ss2
-    , tasty-rerun
     , text
   default-language: Haskell2010
 
@@ -77,6 +78,7 @@ test-suite ss2-test
   other-modules:
       Test.Simplescript.Lex
       Test.Simplescript.Parse
+      Test.Simplescript.TypeCheck
       Paths_ss2
   hs-source-dirs:
       test
@@ -85,6 +87,7 @@ test-suite ss2-test
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
