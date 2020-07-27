@@ -61,6 +61,7 @@ data Literal a
     = IntLit a Int
     | NumberLit a Double
     | StringLit a Text 
+    | CharLit a Char 
     | ListLit a [Expr a]
     | RecordLit a [(Text, Expr a)]
     | FunctionLit a [Destructured a] (Expr a)

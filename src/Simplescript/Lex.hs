@@ -74,6 +74,7 @@ pSToken = lexeme $ withPos $ choice
     , LSquareBracket <$ char '['
     , RSquareBracket <$ char ']'
     , pString
+    , pChar
     , Parsec.try pNumber 
     , pInt
     , pIdentifier
@@ -120,6 +121,13 @@ pInt = do
     case R.readEither str of 
         Right n -> pure $ Int n
         Left err -> fail err
+
+pChar :: Parser SToken
+pChar = do
+    CharParser.char '\''
+    c <- CharParser.asciiChar
+    CharParser.char '\''
+    return $ Char c
 
 pNumber :: Parser SToken
 pNumber = do

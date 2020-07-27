@@ -323,6 +323,15 @@ pInt = tokNoErr (\case
         _ -> Nothing
     )
 
+pCharLit :: Parser LiteralPos
+pCharLit = addPositions CharLit <$> pChar 
+
+pChar :: Parser (WithPos Char)
+pChar = tokNoErr (\case 
+        Tok.Char n -> Just n
+        _ -> Nothing
+    )
+
 pNumberLit :: Parser LiteralPos
 pNumberLit = addPositions NumberLit <$> pDouble 
 

@@ -90,7 +90,7 @@ data SToken
     | Int Int
     | Number Double
     | Operator Text
-    | SChar Char
+    | Char Char
     | SString Text
     | Assign
     | Backslash
@@ -137,7 +137,7 @@ showSToken = \case
     Keyword k -> T.toLower $ T.pack $ show k
     Identifier s -> s
     Operator s -> s
-    SChar s -> T.singleton s
+    Char s -> T.singleton s
     SString s -> "\"" <>  s <> "\"" 
     Int n -> T.pack $ show n
     Number n -> T.pack $ show n

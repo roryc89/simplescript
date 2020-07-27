@@ -22,29 +22,35 @@ tests = testGroup "TypeCheck"
         [ testCase "integer value without annotation" $ do 
             "val = 22"
                 `passesCheck`
-                    [ Val (Int 22) (Concrete "Int")
+                    [ Val (Int 22) (Constant "Int" [])
                     ]
 
         , testCase "string value without annotation" $ do 
             "val = \"str\""
                 `passesCheck`
-                    [ Val (String "str") (Concrete "Int")
+                    [ Val (String "str") (Constant "Int" [])
                     ]
 
         , testCase "integer value with annotation" $ do 
             "val : Int\nval = 22"
                 `passesCheck`
-                    [ Val (Int 22) (Concrete "Int")
+                    [ Val (Int 22) (Constant "Int" [])
                     ]
         ]
 
     , testGroup "failing singles" 
-        [ testCase "integer value with annotation" $ do 
+        [ testCase "incorrect annotation" $ do 
             "val : String\nval = 22"
                 `failsCheck`
                     [ TypesDoNotUnify 
                         (Ast.TypeIdentifier () "String")
                         (Ast.TypeIdentifier () "Int")
+                    ]
+
+        , testCase "var declared twice" $ do 
+            "val = 1\nval = 1"
+                `failsCheck`
+                    [ VarDeclaredTwice "val" () ()
                     ]
         ]
     ]
