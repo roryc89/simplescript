@@ -17,8 +17,19 @@ tests :: TestTree
 tests = testGroup "SuperSimple.Infer"
     [ testGroup "singles"
         [ testCase "integer" $
-            inferExprType (Int 1, ()) @?= Right (Int 1, Type.Int)
-        , testCase "integer" $
+            Int 1 `testInference` Type.Int
+        , testCase "Bool" $
+            Bool 1 `testInference` Type.Bool
+        ]
+    , testGroup "functions"
+        [ testCase "lambda" $
+            inferExprType (Int 1, ()) 
+                @?= 
+                    Right (Int 1, Type.Int)
+        , testCase "Bool" $
             inferExprType (Bool True, ()) @?= Right (Bool True, Type.Bool)
         ]
     ]
+
+    where 
+        testInference e t = inferExprType (e, ()) @?= Right (e, t)
