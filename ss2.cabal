@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ca0177d0dbca120a24f78661c7a19a1909c23241de331362d9977d0f0f9cf82e
+-- hash: 63661765fd39f37ebf5ac6cc802c53c43fd7e8c226501293b052327c1ec9bfe0
 
 name:           ss2
 version:        0.1.0.0
@@ -29,8 +29,22 @@ library
   exposed-modules:
       Lib
       Simplescript.Ast
+      Simplescript.Check
+      Simplescript.Infer
+      Simplescript.Infer.AssignIds
+      Simplescript.Infer.Expr
+      Simplescript.Infer.Expr.Typed
+      Simplescript.Infer.Expr.Untyped
+      Simplescript.Infer.Pattern
+      Simplescript.Infer.SubstitutionMap
+      Simplescript.Infer.Type
+      Simplescript.Infer.TypeError
+      Simplescript.Infer.UsedTypes
       Simplescript.Lex
       Simplescript.Parse
+      Simplescript.SuperSimple.Expr
+      Simplescript.SuperSimple.Infer
+      Simplescript.SuperSimple.Type
       Simplescript.Token
   other-modules:
       Paths_ss2
@@ -69,6 +83,7 @@ test-suite ss2-test
   main-is: test.hs
   other-modules:
       Test.Simplescript.Lex
+      Test.Simplescript.SuperSimple.Infer
       Paths_ss2
   hs-source-dirs:
       test
