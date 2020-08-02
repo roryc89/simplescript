@@ -53,12 +53,6 @@ inferBindings bindings subMap id ((varName, expr) : t) =
                 Left err -> Left err 
                 Right (rest, nextId_) -> Right $ ((varName, expr) : rest, nextId_)
             
-            -- Right $ (expr, nextId) : inferBindings newBindings subMap id t
-            -- let 
-            --     (expr, nextId) = inferExprType bindings subMap (id + 1) expr
-            -- in 
-            -- case 
-
             
 
 
