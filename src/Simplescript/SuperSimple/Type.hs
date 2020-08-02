@@ -33,4 +33,5 @@ data Type
         Type -- to
     | Int
     | Bool
+    | Id Int
     deriving(Eq, Ord, Show)

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 63661765fd39f37ebf5ac6cc802c53c43fd7e8c226501293b052327c1ec9bfe0
+-- hash: 0b0f61f2ee338127e50aeec716714ad6e9ea9d3c98ff214fb8da192c0d435922
 
 name:           ss2
 version:        0.1.0.0
@@ -44,6 +44,7 @@ library
       Simplescript.Parse
       Simplescript.SuperSimple.Expr
       Simplescript.SuperSimple.Infer
+      Simplescript.SuperSimple.SubstitutionMap
       Simplescript.SuperSimple.Type
       Simplescript.Token
   other-modules:
