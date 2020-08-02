@@ -3,6 +3,7 @@
 
 module Test.Simplescript.SuperSimple.Infer where 
 
+import qualified Data.Map as Map
 import Test.Tasty
 import Test.Tasty.HUnit
 import Data.Text (Text)
@@ -25,8 +26,14 @@ tests = testGroup "SuperSimple.Infer"
             Lambda "a" (Var "a", ()) 
                 `testInference`
                     T.Function (T.Id 0) (T.Id 0)
+        , testCase "Let const" $ 
+            Let [ ("b", (Int 1, () )) ]
+             (Lambda "a" (Var "b", ()), ())
+                `testInference`
+                    T.Function (T.Id 0) (T.Int)
         ]
     ]
 
     where 
+        -- let_ bs = Let bs)
         testInference e t = fmap snd (inferExprTypeStandalone (e, ())) @?= Right t

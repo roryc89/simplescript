@@ -24,5 +24,6 @@ data Expr_ a
       { fn :: Expr a
       , argument :: Expr a 
       }
+    | Let [(Text, Expr a)] (Expr a)
     deriving(Eq, Ord, Show, Foldable, Functor)
     
