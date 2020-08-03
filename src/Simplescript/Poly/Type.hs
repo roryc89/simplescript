@@ -4,9 +4,9 @@ newtype TVar = TV String
   deriving (Show, Eq, Ord)
 
 data Type
-  = TVar TVar
-  | TCtr String
-  | TArrow Type Type
+  = TVar TVar -- Type variables such as `a`
+  | TCtr String -- Type Constructor for creating types such as `Int`
+  | TArrow Type Type -- Type arrow for functions
   deriving (Show, Eq, Ord)
 
 data Forall = Forall [TVar] Type

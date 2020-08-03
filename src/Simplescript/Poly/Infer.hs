@@ -62,7 +62,7 @@ instance Substitutable Type where
 
   getFreeTypeVars TCtr{}         = Set.empty
   getFreeTypeVars (TVar a)       = Set.singleton a
-  getFreeTypeVars (t1 `TArrow` t2) = getFreeTypeVars t1 `Set.union` getFreeTypeVars t2
+  getFreeTypeVars (t1 `TArrow` t2) = getFreeTypeVars t1 <> getFreeTypeVars t2
 
 instance Substitutable Forall where
   substitute (SubstMap s) (Forall as t)
@@ -74,7 +74,7 @@ instance Substitutable Forall where
 
 instance Substitutable Constraint where
    substitute s (t1, t2) = (substitute s t1, substitute s t2)
-   getFreeTypeVars (t1, t2) = getFreeTypeVars t1 `Set.union` getFreeTypeVars t2
+   getFreeTypeVars (t1, t2) = getFreeTypeVars t1 <> getFreeTypeVars t2
 
 instance Substitutable a => Substitutable [a] where
   substitute = map . substitute
