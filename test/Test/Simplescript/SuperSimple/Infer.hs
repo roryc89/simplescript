@@ -27,15 +27,23 @@ tests = testGroup "SuperSimple.Infer"
                 `testInference`
                     T.Function (T.Id 0) (T.Id 0)
         , testCase "Const" $ 
-            Let [ ("b", (Int 1, () )) ]
+            Let [ ("b", E (Int 1, () )) ]
              (Lambda "a" (Var "b", ()), ())
                 `testInference`
                     T.Function (T.Id 0) (T.Int)
         , testCase "Let const" $ 
-            Let [ ("b", (Int 1, () )) ]
+            Let [ ("b", E (Int 1, () )) ]
              (Lambda "a" (Var "b", ()), ())
                 `testInference`
                     T.Function (T.Id 0) (T.Int)
+        ]
+    , testGroup "Custom types" $
+
+        [ testCase "Let const" $ 
+            Let [ ("T", T [Ctr "C" []]) ]
+             (Lambda "a" (Var "C", ()), ())
+                `testInference`
+                    T.Function (T.Id 1) (T.UserDefined "C" 0 )
         ]
     ]
 

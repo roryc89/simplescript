@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Simplescript.SuperSimple.Infer (inferExprType, inferExprTypeStandalone) where 
 
 import Data.Bifunctor (first)
@@ -8,54 +10,116 @@ import qualified Data.Map as Map
 import Simplescript.SuperSimple.Expr
 import qualified Simplescript.SuperSimple.Type as T
 import Simplescript.SuperSimple.Type (Type)
-import Simplescript.SuperSimple.SubstitutionMap
+import Simplescript.SuperSimple.SubstitutionMap (SubstitutionMap)
+import qualified Simplescript.SuperSimple.SubstitutionMap as SubMap
 import Simplescript.Infer.UsedTypes
 
-type Bindings = Map Text (Expr Type)
+type ExprBindings = Map VarName (Expr Type)
+
+type TypeBindings = Map VarName Int
+
+data Env = Env 
+    { exprs :: ExprBindings 
+    , types :: TypeBindings
+    , subMap :: SubstitutionMap
+    , currentId :: Int
+    }
+
+emptyEnv :: Env
+emptyEnv = Env mempty mempty SubMap.empty 0
+
+insertExpr :: VarName -> Expr Type -> Env -> Env
+insertExpr varName e = insertExprs [(varName, e)]
+
+insertExprs :: [(VarName, Expr Type)] -> Env -> Env
+insertExprs newExprs Env{..} =
+    Env 
+        (Map.union (Map.fromList newExprs) exprs)
+        types
+        subMap
+        currentId
+
+
+insertType :: VarName -> [T.Ctr] -> Env -> Env
+insertType varName t Env{..} =
+    Env
+        exprs
+        (Map.insert varName currentId types)
+        undefined
+        -- (SubMap.insert currentId (T.UserDefined currentId varName t) subMap)
+        (currentId + 1)
+    
+insertTypes ::  Env -> [(VarName, [T.Ctr])] -> Env
+insertTypes  = foldr (uncurry insertType)
+
+incId :: Env -> Env
+incId Env{..} = 
+    Env 
+        exprs
+        types
+        subMap
+        (currentId + 1)
 
 inferExprTypeStandalone :: 
     Expr () -> Either [TypeError] (Expr Type)
-inferExprTypeStandalone = fmap fst . inferExprType mempty emptySubMap 0
-
+inferExprTypeStandalone = fmap fst . inferExprType emptyEnv
 
 inferExprType :: 
-    Bindings -> SubstitutionMap -> Int -> Expr () -> Either [TypeError] (Expr Type, Int)
-inferExprType bindings subMap id (e, _) = case e of 
-    Int i -> Right $ ((Int i, T.Int), id + 1)
-    Bool i -> Right $ ((Bool i, T.Bool), id + 1)
-    Var varName -> case Map.lookup varName bindings of 
+   Env -> Expr () -> Either [TypeError] (Expr Type, Env)
+inferExprType env@Env{..} (e, _) = case e of 
+
+    Int i -> Right $ ((Int i, T.Int), incId env)
+
+    Bool i -> Right $ ((Bool i, T.Bool), incId env)
+
+    Var varName -> case Map.lookup varName exprs of 
         Nothing -> Left [VarNotFound varName]
-        Just e -> Right (e, id + 1)
+        Just e -> Right (e, incId env)
+
     Lambda arg body -> do 
-        let argT = T.Id id
-        ((bodyE, bodyT), nextId) <- inferExprType (Map.insert arg (Var arg, argT) bindings) subMap id body
+        let argT = T.Id currentId
+        ((bodyE, bodyT), nextEnv) <- inferExprType (insertExpr arg (Var arg, argT) env) body
         pure 
             (   ( Lambda arg (bodyE, bodyT)
                 , T.Function argT bodyT
                 )
-            ,   nextId
+            ,   nextEnv
             )
 
     Let bs expr -> do
-        (bsTyped, nextId) <- first Map.fromList <$> inferBindings bindings subMap id bs
-        inferExprType (Map.union bsTyped bindings) subMap nextId expr
+        let typeBindings = getTypeBindings bs
+        (bsTyped, nextEnv) <- inferExprBindings (insertTypes env typeBindings) (getExprBindings bs)
+        inferExprType (insertExprs bsTyped nextEnv) expr
 
-inferBindings :: Bindings -> SubstitutionMap -> Int -> [(VarName, Expr ())] -> Either [TypeError] ([(VarName, Expr Type)], Int)
-inferBindings bindings subMap id [] = Right ([], id)
-inferBindings bindings subMap id ((varName, expr) : t) = 
-    case inferExprType bindings subMap id expr of 
+getExprBindings :: [(VarName, ExprOrType ())] -> [(VarName, Expr ())]
+getExprBindings = concatMap getExprBinding
+
+getExprBinding :: (VarName, ExprOrType ()) -> [(VarName, Expr ())]
+getExprBinding (vn, e) = case e of 
+    T _ -> []
+    E expr -> [(vn, expr)]
+
+getTypeBindings :: [(VarName, ExprOrType ())] -> [(VarName, [T.Ctr])]
+getTypeBindings = concatMap getTypeBinding
+
+getTypeBinding :: (VarName, ExprOrType ()) -> [(VarName, [T.Ctr])]
+getTypeBinding (vn, e) = case e of 
+    T t -> [(vn, t)]
+    E expr -> []
+    
+inferExprBindings :: Env -> [(VarName, Expr ())] -> Either [TypeError] ([(VarName, Expr Type)], Env)
+inferExprBindings env [] = Right ([], env)
+inferExprBindings env ((varName, expr) : t) = 
+    case inferExprType env expr of 
         Left err -> Left err 
-        Right (expr, nextId) ->
+        Right (expr, nextEnv) ->
             let 
-                newBindings =  Map.insert varName expr bindings
+                newEnv = insertExpr varName expr env
             in 
-            case inferBindings newBindings subMap id t of 
+            case inferExprBindings newEnv t of 
                 Left err -> Left err 
-                Right (rest, nextId_) -> Right $ ((varName, expr) : rest, nextId_)
-            
-            
-
-
+                Right (rest, nextEnv_) -> Right $ ((varName, expr) : rest, nextEnv_)
+                
 data TypeError
     = TypeMismatch Type Type
     | VarNotFound VarName
