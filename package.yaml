@@ -27,6 +27,7 @@ dependencies:
 - parser-combinators
 - containers
 - safe
+- mtl
 
 library:
   source-dirs: src

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0b0f61f2ee338127e50aeec716714ad6e9ea9d3c98ff214fb8da192c0d435922
+-- hash: 0a85f70f35b0878b90c057453c983377dc56a49bcf052ade64fd84d00ddff1af
 
 name:           ss2
 version:        0.1.0.0
@@ -41,7 +41,10 @@ library
       Simplescript.Infer.TypeError
       Simplescript.Infer.UsedTypes
       Simplescript.Lex
-      Simplescript.Parse
+      Simplescript.Poly.Env
+      Simplescript.Poly.Expr
+      Simplescript.Poly.Infer
+      Simplescript.Poly.Type
       Simplescript.SuperSimple.Expr
       Simplescript.SuperSimple.Infer
       Simplescript.SuperSimple.SubstitutionMap
@@ -55,6 +58,7 @@ library
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
@@ -72,6 +76,7 @@ executable ss2-exe
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
@@ -84,6 +89,7 @@ test-suite ss2-test
   main-is: test.hs
   other-modules:
       Test.Simplescript.Lex
+      Test.Simplescript.Parse
       Test.Simplescript.SuperSimple.Infer
       Paths_ss2
   hs-source-dirs:
@@ -93,6 +99,7 @@ test-suite ss2-test
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
     , neat-interpolation
     , parser-combinators
     , safe
