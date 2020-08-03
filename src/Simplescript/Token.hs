@@ -13,7 +13,8 @@ import Data.Proxy
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import Text.Megaparsec
+import Text.Megaparsec 
+import qualified Text.Megaparsec.Pos as Pos
 import qualified Data.List          as DL
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set           as Set
@@ -22,14 +23,40 @@ import Safe
 
 type TokenAndPosLine = Line [WithPos SToken]
 
+--  TODO: Remove Line adt and handle newlines in lexing
 data Line a = Line
     { line :: a
     , indented :: [Line a]
     }
     deriving (Eq, Ord, Show, Functor)
 
-flattenLines :: Monoid a => Line a -> a
-flattenLines Line{..} = line <> foldMap flattenLines indented
+flattenLines :: [Line [WithPos SToken]] -> [WithPos SToken]
+flattenLines =  DL.intercalate [liftSToken Newline] . fmap flattenLine
+
+flattenLine :: Line [WithPos SToken] -> [WithPos SToken]
+flattenLine Line{..} = 
+  
+  if tok1 /= Just (Keyword Let)
+    && getIndentAt 0 indented == getIndentAt 1 indented 
+    then 
+    line <> foldMap flattenLine indented
+  else 
+    line <> flattenLines indented
+
+  where 
+    tok1 = tokenVal <$> headMay line
+
+    
+
+getIndentAt :: Int -> [TokenAndPosLine] -> Maybe Pos
+getIndentAt idx line = getIndent =<< atMay line idx 
+
+getIndent :: TokenAndPosLine -> Maybe Pos
+getIndent Line{..} = Pos.sourceColumn . startPos <$> headMay line
+
+-- removeIndentedNewlines :: [WithPos SToken] -> [WithPos SToken]
+-- removeIndentedNewlines (h1:h2:t) = t
+-- removeIndentedNewlines l = l
 
 linesToList :: Line [a] -> [[a]]
 linesToList Line{..} = [line] <> (linesToList =<< indented)
@@ -48,7 +75,7 @@ insertBlankLines (row1:row2:tail) = row1 : (replicate blanks [] <> insertBlankLi
             _ -> 0
           
         row1IdxMay = getRow <$>  headMay row1
-        nextRowIdxMay = getRow <$> (headMay =<< DL.find ((/=) []) (row2:tail))
+        nextRowIdxMay = getRow <$> (headMay =<< DL.find (/= []) (row2:tail))
 
         getRow = unPos . sourceLine . startPos
 
@@ -58,23 +85,41 @@ removePositions :: TokenAndPosLine -> Line [SToken]
 removePositions = fmap (fmap tokenVal)
 
 data SToken 
-    = Identifier Text
+    = Keyword Keyword
+    | Identifier Text
     | Int Int
     | Number Double
     | Operator Text
-    | SChar Char
+    | Char Char
     | SString Text
     | Assign
     | Backslash
     | Arrow
     | Colon
     | Comma
+    | Pipe
     | LParen 
     | RParen
     | LBrace
     | RBrace
     | LSquareBracket
     | RSquareBracket
+    | Newline
+    deriving (Eq, Ord, Show)
+
+data Keyword 
+    = Type
+    | Let 
+    | In 
+    | Case 
+    | Of 
+    | Is 
+    | If 
+    | Then 
+    | Else 
+    | Import
+    | Export
+    | Help
     deriving (Eq, Ord, Show)
 
 showSTokensWithIdent :: [WithPos SToken] -> Text
@@ -89,9 +134,10 @@ showSTokensWithIdent = go ""
 
 showSToken :: SToken -> Text
 showSToken = \case
+    Keyword k -> T.toLower $ T.pack $ show k
     Identifier s -> s
     Operator s -> s
-    SChar s -> T.singleton s
+    Char s -> T.singleton s
     SString s -> "\"" <>  s <> "\"" 
     Int n -> T.pack $ show n
     Number n -> T.pack $ show n
@@ -100,19 +146,21 @@ showSToken = \case
     Backslash -> "\\"
     Colon -> ":"
     Comma -> ","
+    Pipe -> "|"
     LParen -> "("
     RParen -> ")"
     LBrace -> "{"
     RBrace -> "}"
     LSquareBracket -> "["
     RSquareBracket -> "]"
+    Newline -> "\n"
 
 data WithPos a = WithPos
   { startPos :: SourcePos
   , endPos :: SourcePos
   , tokenLength :: Int
   , tokenVal :: a
-  } deriving (Eq, Ord, Show)
+  } deriving (Eq, Ord, Show, Functor)
 
 
 newtype TokStream = TokStream [WithPos SToken]
@@ -191,7 +239,7 @@ instance Stream TokStream where
 pxy :: Proxy TokStream
 pxy = Proxy
 
--- liftSToken :: SToken -> WithPos SToken
--- liftSToken = WithPos pos pos 0
---   where
---     pos = initialPos ""
+liftSToken :: SToken -> WithPos SToken
+liftSToken = WithPos pos pos 0
+  where
+    pos = initialPos ""

@@ -5,7 +5,7 @@ import qualified Test.Simplescript.SuperSimple.Infer as SuperSimple.Infer
 -- import qualified Test.Simplescript.Parser as Parser
 
 
-main = defaultMain tests
+main = defaultMainWithRerun tests
 
 tests :: TestTree
 tests = testGroup "Tests"

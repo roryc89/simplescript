@@ -26,6 +26,7 @@ dependencies:
 - neat-interpolation
 - parser-combinators
 - containers
+- mtl
 - safe
 - mtl
 
@@ -55,4 +56,5 @@ tests:
     - ss2
     - tasty
     - tasty-hunit
+    - tasty-rerun
     - neat-interpolation

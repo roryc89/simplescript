@@ -15,7 +15,7 @@ import           Text.Megaparsec            (choice, many, some, (<|>))
 import qualified Text.Megaparsec.Char       as CharParser
 import           Text.Megaparsec.Char       (char, string)
 import qualified Text.Megaparsec.Char.Lexer as Lexer
-import Simplescript.Token (SToken(..), Line(..), WithPos(..), TokenAndPosLine, showSToken)
+import Simplescript.Token (SToken(..), Keyword(..), Line(..), WithPos(..), TokenAndPosLine, showSToken)
 
 type Parser = Parsec.Parsec Void Text
 
@@ -61,10 +61,12 @@ pSTokens = Parsec.many pSToken
 pSToken :: Parser (WithPos SToken) 
 pSToken = lexeme $ withPos $ choice 
     [ Arrow <$ string "=>"
+    , Keyword <$> pKeyword
     , Assign <$ char '='
     , Backslash <$ char '\\'
     , Colon <$ char ':'
     , Comma <$ char ','
+    , Pipe <$ char '|'
     , LParen <$ char '('
     , RParen <$ char ')'
     , LBrace <$ char '{'
@@ -72,10 +74,27 @@ pSToken = lexeme $ withPos $ choice
     , LSquareBracket <$ char '['
     , RSquareBracket <$ char ']'
     , pString
+    , pChar
     , Parsec.try pNumber 
     , pInt
     , pIdentifier
     , Operator . T.pack <$> some (choice $ fmap char ("$%^&*-+=;<>,./~!" :: String))
+    ]
+
+pKeyword :: Parser Keyword
+pKeyword = choice 
+    [ Type <$ string "type" 
+    , Let <$ string "let" 
+    , In <$ string "in" 
+    , Case <$ string "case" 
+    , Of <$ string "of" 
+    , If <$ string "if" 
+    , Is <$ string "is" 
+    , Then <$ string "then" 
+    , Else <$ string "else" 
+    , Import <$ string "import" 
+    , Export <$ string "export" 
+    , Help <$ string "help" 
     ]
 
 withPos :: Parser SToken -> Parser (WithPos SToken)
@@ -102,6 +121,13 @@ pInt = do
     case R.readEither str of 
         Right n -> pure $ Int n
         Left err -> fail err
+
+pChar :: Parser SToken
+pChar = do
+    CharParser.char '\''
+    c <- CharParser.asciiChar
+    CharParser.char '\''
+    return $ Char c
 
 pNumber :: Parser SToken
 pNumber = do

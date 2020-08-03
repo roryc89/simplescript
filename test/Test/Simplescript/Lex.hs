@@ -26,6 +26,10 @@ tests = testGroup "Lexer"
         , testCase "identifier" $
             runLexerWoPos "myIdent" @?= Right [Line [Identifier "myIdent"] []]
         ]
+    , testGroup "multiple"
+        [ testCase "keywords" $
+            runLexerWoPos "if then else is case help" @?= Right [Line (fmap Keyword [If, Then, Else, Is, Case, Help]) []]
+        ]
     , testGroup "multiline" 
         [ testCase "flat" $
             runLexerWoPos "a\n1" @?= 
