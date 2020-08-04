@@ -4,3 +4,5 @@ cradle:
       component: "ss2:test:ss2-test"
     - path: ./src
       component: "ss2:lib"
+    - path: ./app
+      component: "ss2:app"

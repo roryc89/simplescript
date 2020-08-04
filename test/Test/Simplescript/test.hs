@@ -11,4 +11,4 @@ tests :: TestTree
 tests = testGroup "Tests"
   [ Lex.tests
   , SuperSimple.Infer.tests
-  ]
+  ] 

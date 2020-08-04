@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0a85f70f35b0878b90c057453c983377dc56a49bcf052ade64fd84d00ddff1af
+-- hash: 18fa276831ac5c72382a861c8450ab312a71d172f06625f408e907b18e67f957
 
 name:           ss2
 version:        0.1.0.0
@@ -30,6 +30,8 @@ library
       Lib
       Simplescript.Ast
       Simplescript.Check
+      Simplescript.Error
+      Simplescript.Eval
       Simplescript.Infer
       Simplescript.Infer.AssignIds
       Simplescript.Infer.Expr
@@ -41,9 +43,17 @@ library
       Simplescript.Infer.TypeError
       Simplescript.Infer.UsedTypes
       Simplescript.Lex
+      Simplescript.Parse
+      Simplescript.Parse.Operator
+      Simplescript.Parse.TypeOperator
       Simplescript.Poly.Env
+      Simplescript.Poly.Eval
       Simplescript.Poly.Expr
       Simplescript.Poly.Infer
+      Simplescript.Poly.Lexer
+      Simplescript.Poly.Main
+      Simplescript.Poly.Parser
+      Simplescript.Poly.Pretty
       Simplescript.Poly.Type
       Simplescript.SuperSimple.Expr
       Simplescript.SuperSimple.Infer
@@ -63,7 +73,10 @@ library
     , megaparsec
     , mtl
     , neat-interpolation
+    , parsec
     , parser-combinators
+    , pretty
+    , repline
     , safe
     , text
   default-language: Haskell2010
@@ -81,7 +94,10 @@ executable ss2-exe
     , megaparsec
     , mtl
     , neat-interpolation
+    , parsec
     , parser-combinators
+    , pretty
+    , repline
     , safe
     , ss2
     , text
@@ -94,6 +110,7 @@ test-suite ss2-test
       Test.Simplescript.Lex
       Test.Simplescript.Parse
       Test.Simplescript.SuperSimple.Infer
+      Test.Simplescript.TypeCheck
       Paths_ss2
   hs-source-dirs:
       test
@@ -104,7 +121,10 @@ test-suite ss2-test
     , megaparsec
     , mtl
     , neat-interpolation
+    , parsec
     , parser-combinators
+    , pretty
+    , repline
     , safe
     , ss2
     , tasty

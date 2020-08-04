@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import qualified Simplescript.Poly.Main as Poly
 
 main :: IO ()
-main = someFunc
+main = Poly.main

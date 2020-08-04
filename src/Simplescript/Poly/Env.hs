@@ -1,5 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 module Simplescript.Poly.Env (
   Env(..),
   empty,
@@ -28,7 +26,7 @@ import qualified Data.Map as Map
 -- Typing Environment
 -------------------------------------------------------------------------------
 
-data Env = TypeEnv { types :: Map.Map Name Forall }
+newtype Env = TypeEnv { types :: Map.Map Name Forall }
   deriving (Eq, Show)
 
 empty :: Env

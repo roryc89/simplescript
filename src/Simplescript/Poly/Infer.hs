@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeSynonymInstances       #-}
 {-# LANGUAGE FlexibleInstances       #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving       #-}
 
@@ -35,17 +34,17 @@ type Infer a =
   )              -- Result
 
 -- | Inference state
-data InferState = InferState { count :: Int }
+newtype InferState = InferState { count :: Int }
 
 -- | Initial inference state
 initInfer :: InferState
 initInfer = InferState { count = 0 }
 
-type Constraint = (Type, Type)
+type TypeEquation = (Type, Type)
 
-type Unifier = (SubstMap, [Constraint])
+type Unifier = (SubstMap, [TypeEquation])
 
--- | Constraint solver monad
+-- | TypeEquation solver monad
 type Solve a = ExceptT TypeError Identity a
 
 newtype SubstMap = SubstMap (Map.Map TVar Type)
@@ -62,7 +61,7 @@ instance Substitutable Type where
 
   getFreeTypeVars TCtr{}         = Set.empty
   getFreeTypeVars (TVar a)       = Set.singleton a
-  getFreeTypeVars (t1 `TArrow` t2) = getFreeTypeVars t1 <> getFreeTypeVars t2
+  getFreeTypeVars (t1 `TArrow` t2) = getFreeTypeVars t1 `Set.union` getFreeTypeVars t2
 
 instance Substitutable Forall where
   substitute (SubstMap s) (Forall as t)
@@ -72,9 +71,9 @@ instance Substitutable Forall where
 
   getFreeTypeVars (Forall as t) = getFreeTypeVars t `Set.difference` Set.fromList as
 
-instance Substitutable Constraint where
+instance Substitutable TypeEquation where
    substitute s (t1, t2) = (substitute s t1, substitute s t2)
-   getFreeTypeVars (t1, t2) = getFreeTypeVars t1 <> getFreeTypeVars t2
+   getFreeTypeVars (t1, t2) = getFreeTypeVars t1 `Set.union` getFreeTypeVars t2
 
 instance Substitutable a => Substitutable [a] where
   substitute = map . substitute
@@ -88,7 +87,7 @@ data TypeError
   = UnificationFail Type Type
   | InfiniteType TVar Type
   | UnboundVariable String
-  | Ambigious [Constraint]
+  | Ambigious [TypeEquation]
   | UnificationMismatch [Type] [Type]
 
 -------------------------------------------------------------------------------
@@ -96,7 +95,7 @@ data TypeError
 -------------------------------------------------------------------------------
 
 -- | Run the inference monad
-runInfer :: Env -> Infer (Type, [Constraint]) -> Either TypeError (Type, [Constraint])
+runInfer :: Env -> Infer (Type, [TypeEquation]) -> Either TypeError (Type, [TypeEquation])
 runInfer env m = runExcept $ evalStateT (runReaderT m env) initInfer
 
 -- | Solve for the toplevel type of an expression in a given environment
@@ -108,7 +107,7 @@ inferExpr env ex = case runInfer env (infer ex) of
     Right subst -> Right $ closeOver $ substitute subst ty
 
 -- | Return the internal constraints used in solving for the type of an expression
-constraintsExpr :: Env -> Expr -> Either TypeError ([Constraint], SubstMap, Type, Forall)
+constraintsExpr :: Env -> Expr -> Either TypeError ([TypeEquation], SubstMap, Type, Forall)
 constraintsExpr env ex = case runInfer env (infer ex) of
   Left err -> Left err
   Right (ty, cs) -> case runSolve cs of
@@ -124,7 +123,7 @@ closeOver = normalize . generalize Env.empty
 -- | Extend type environment
 inEnv :: (Name, Forall) -> Infer a -> Infer a
 inEnv (x, sc) m = do
-  let scope e = (remove e x) `extend` (x, sc)
+  let scope e = remove e x `extend` (x, sc)
   local scope m
 
 -- | Lookup type in the environment
@@ -133,8 +132,7 @@ lookupEnv x = do
   (TypeEnv env) <- ask
   case Map.lookup x env of
       Nothing   ->  throwError $ UnboundVariable x
-      Just s    ->  do t <- instantiate s
-                       return t
+      Just s    -> instantiate s
 
 letters :: [String]
 letters = [1..] >>= flip replicateM ['a'..'z']
@@ -142,7 +140,7 @@ letters = [1..] >>= flip replicateM ['a'..'z']
 fresh :: Infer Type
 fresh = do
     s <- get
-    put s{count = count s + 1}
+    put s {count = count s + 1}
     return $ TVar $ TV (letters !! count s)
 
 instantiate ::  Forall -> Infer Type
@@ -161,7 +159,7 @@ ops Mul = typeInt `TArrow` (typeInt `TArrow` typeInt)
 ops Sub = typeInt `TArrow` (typeInt `TArrow` typeInt)
 ops Eql = typeInt `TArrow` (typeInt `TArrow` typeBool)
 
-infer :: Expr -> Infer (Type, [Constraint])
+infer :: Expr -> Infer (Type, [TypeEquation])
 infer expr = case expr of
   Lit (LInt _)  -> return (typeInt, [])
   Lit (LBool _) -> return (typeBool, [])
@@ -176,9 +174,7 @@ infer expr = case expr of
     return (tv `TArrow` t, c)
 
   App e1 e2 -> do
-    (t1, c1) <- infer e1
-    (t2, c2) <- infer e2
-    tv <- fresh
+    (t1, c1, t2, c2, tv) <- infer2Exprs e1 e2
     return (tv, c1 ++ c2 ++ [(t1, t2 `TArrow` tv)])
 
   Let x e1 e2 -> do
@@ -197,9 +193,7 @@ infer expr = case expr of
     return (tv, c1 ++ [(tv `TArrow` tv, t1)])
 
   Op op e1 e2 -> do
-    (t1, c1) <- infer e1
-    (t2, c2) <- infer e2
-    tv <- fresh
+    (t1, c1, t2, c2, tv) <- infer2Exprs e1 e2
     let u1 = t1 `TArrow` (t2 `TArrow` tv)
         u2 = ops op
     return (tv, c1 ++ c2 ++ [(u1, u2)])
@@ -209,6 +203,13 @@ infer expr = case expr of
     (t2, c2) <- infer tr
     (t3, c3) <- infer fl
     return (t2, c1 ++ c2 ++ c3 ++ [(t1, typeBool), (t2, t3)])
+
+  where 
+    infer2Exprs e1 e2 = do 
+      (t1, c1) <- infer e1
+      (t2, c2) <- infer e2
+      tv <- fresh
+      return (t1, c1, t2, c2, tv)
 
 inferTop :: Env -> [(String, Expr)] -> Either TypeError Env
 inferTop env [] = Right env
@@ -232,8 +233,9 @@ normalize (Forall _ body) = Forall (map snd ord) (normtype body)
         Just x -> TVar x
         Nothing -> error "type variable not in signature"
 
+
 -------------------------------------------------------------------------------
--- Constraint Solver
+-- TypeEquation Solver
 -------------------------------------------------------------------------------
 
 -- | The empty substitution
@@ -245,7 +247,7 @@ compose :: SubstMap -> SubstMap -> SubstMap
 (SubstMap s1) `compose` (SubstMap s2) = SubstMap $ Map.map (substitute (SubstMap s1)) s2 `Map.union` s1
 
 -- | Run the constraint solver
-runSolve :: [Constraint] -> Either TypeError SubstMap
+runSolve :: [TypeEquation] -> Either TypeError SubstMap
 runSolve cs = runIdentity $ runExceptT $ solver st
   where st = (emptySubstMap, cs)
 
